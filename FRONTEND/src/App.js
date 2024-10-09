@@ -17,10 +17,20 @@ import NavbarAdmin from './pages/admin/NavbarAdmin';
 import NavbarEmployee from './pages/employee/NavbarEmployee';
 import NavbarEmployer from './pages/employer/NavbarEmployer';
 import EmployerProfile from './pages/employer/EmployerProfile';
+import PostedJobs from './pages/employer/PostedJobs';
+import AdminApplicants from './pages/admin/AdminApplicants';
+import AdminReview from './pages/admin/AdminReview';
+import AdminEmployer from './pages/admin/AdminEmployer';
+import AdminUsers from './pages/admin/AdminUsers';
+import ManageUsers from './pages/admin/ManageUsers';
+import SiteReport from './pages/admin/SiteReport';
+import PostedJobsAdmin from './pages/admin/PostedJobsAdmin';
+import AdminJobApproval from './pages/admin/AdminJobApproval';
 function App() {
   return (
     <div className='App'>
       <Routes>
+
         <Route path='/navbar' element={<Navbar/>}/>
         <Route path='/footer' element={<Footer/>}/>
         <Route path='/contactus' element={<ContactUs/>}/>
@@ -38,12 +48,20 @@ function App() {
 
         <Route path='/employerpage' element={<EmployerPage/>}/>
         <Route path='/employerprofile' element={<EmployerProfile/>}/>
+        <Route path='/PostedJobs' element={<PostedJobs/>}/>
 
         <Route path='/adminpage' element={<AdminPage/>}/>
-
+        <Route path='/adminpage1' element={<AdminApplicants/>}/>
+        <Route path='/adminpage2' element={<AdminEmployer/>}/>
+        <Route path='/adminpage3' element={<AdminReview/>}/>
+        <Route path='/adminpage4' element={<AdminUsers/>}/>
+        <Route path='manageUsers' element={<ManageUsers/>}/>
+        <Route path='siteReport' element={<SiteReport/>}/>
+        <Route path='postedJobsAdmin' element={<PostedJobsAdmin/>}/>
         <Route path='/navbaradmin' element={<NavbarAdmin/>}/>
         <Route path='/navbaremployer' element={<NavbarEmployer/>}/>
         <Route path='/navbaremployee' element={<NavbarEmployee/>}/>
+        <Route path='/adminJobAprooval' element={<AdminJobApproval/>}/>
 
       </Routes>
     </div>

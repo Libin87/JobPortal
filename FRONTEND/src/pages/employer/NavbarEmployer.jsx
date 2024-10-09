@@ -1,34 +1,56 @@
+
+
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios'; // Import axios
 
 const NavbarEmployer = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
   const navigate = useNavigate();
-  const location = useLocation(); 
+  const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken'); 
+    const token = localStorage.getItem('authToken');
+    const storedUserName = localStorage.getItem('name');
+
     if (token) {
       setIsLoggedIn(true);
+      setUserName(storedUserName);
       const logoutTimer = setTimeout(() => {
         handleLogout();
-      }, 1800000);
+      }, 1800000); // Logout after 30 minutes
 
-      return () => clearTimeout(logoutTimer); 
+      return () => clearTimeout(logoutTimer);
     }
   }, [isLoggedIn]);
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('role');
+    localStorage.removeItem('name');
     setIsLoggedIn(false);
     navigate('/login');
   };
 
-  const handleDashboardClick = () => {
-    if (location.pathname !== '/employerpage') {
-      navigate('/employerpage');
+  // Axios instance for API calls
+  const api = axios.create({
+    baseURL: 'http://localhost:5000/api', // Adjust the base URL as needed
+  });
+
+  const fetchData = async () => {
+    try {
+      const response = await api.get('/some-endpoint'); // Example endpoint
+      console.log(response.data);
+    } catch (error) {
+      if (error.response) {
+        console.error('Error Response:', error.response.data);
+      } else if (error.request) {
+        console.error('No Response:', error.request);
+      } else {
+        console.error('Error', error.message);
+      }
     }
   };
 
@@ -49,18 +71,22 @@ const NavbarEmployer = () => {
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
+        <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul className="navbar-nav align-items-center">
             <li className="nav-item">
               <NavLink className="nav-link" to="/" style={styles.navLink}>
                 HomePage
               </NavLink>
             </li>
-            
             <li className="nav-item">
-              <button className="nav-link btn" onClick={handleDashboardClick} style={styles.navLink}>
+              <NavLink
+                to="/employerpage"
+                className="nav-link btn"
+                activeClassName="active"
+                style={styles.navLink}
+              >
                 Employer Dashboard
-              </button>
+              </NavLink>
             </li>
             <li className="nav-item">
               <NavLink className="nav-link" to="/contactus" style={styles.navLink}>
@@ -72,6 +98,13 @@ const NavbarEmployer = () => {
                 About
               </NavLink>
             </li>
+            {isLoggedIn && (
+              <li className="nav-item">
+                <span className="navbar-text" style={styles.userName}>
+                  Hello, {userName}!
+                </span>
+              </li>
+            )}
             <li className="nav-item">
               {isLoggedIn ? (
                 <button className="nav-link btn btn-danger text-white ms-2" onClick={handleLogout} style={styles.logoutButton}>
@@ -98,19 +131,23 @@ const styles = {
   brand: {
     fontSize: '1.5rem',
     fontWeight: 'bold',
-    color: '#360275', 
+    color: '#360275',
   },
   navLink: {
     fontSize: '1rem',
     color: '#333',
     padding: '8px 16px',
     transition: 'color 0.3s ease',
-    background: 'none',
-    border: 'none', 
+  },
+  userName: {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#F04B3F',
+    marginRight: '10px',
   },
   loginButton: {
-    backgroundColor: '#360275', 
-    borderColor: '#360275',     
+    backgroundColor: '#360275',
+    borderColor: '#360275',
     fontSize: '1rem',
   },
   logoutButton: {

@@ -44,12 +44,7 @@ const Navbar = () => {
               </NavLink>
             </li>
             
-            <li className="nav-item">
-              <NavLink className="nav-link" to="#" style={styles.navLink} 
-              >
-                Dashboard
-              </NavLink>
-            </li>
+            
             <li className="nav-item">
               <NavLink className="nav-link" to="/contactus" style={styles.navLink}>
                 Contact

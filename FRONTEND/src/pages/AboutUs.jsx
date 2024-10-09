@@ -1,13 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
-import image from '../images/about.jpg'
+import NavbarAdmin from '../pages/admin/NavbarAdmin';
+import NavbarEmployee from '../pages/employee/NavbarEmployee';
+import NavbarEmployer from '../pages/employer/NavbarEmployer';
+import Navbar from '../components/Navbar'
+import image from '../images/about.jpg';
 
-const AboutUs=() => {
+const AboutUs = () => {
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const role = localStorage.getItem('role');
+    setUserRole(role);
+  }, []);
+
+  const renderNavbar = () => {
+    if (userRole === 'admin') {
+      return <NavbarAdmin />;
+    } else if (userRole === 'employee') {
+      return <NavbarEmployee />;
+    } else if (userRole === 'employer') {
+      return <NavbarEmployer />;
+    } else {
+      return <Navbar />;
+    }
+  };
+
   return (
     <div>
-      <Navbar />
+      {renderNavbar()} 
       <section style={styles.aboutSection}>
         <div className="container">
           <div className="row">
@@ -35,7 +57,6 @@ const AboutUs=() => {
         </div>
       </section>
 
-      {/* Vision and Mission Section */}
       <section style={styles.visionMissionSection}>
         <div className="container text-center">
           <h2 style={styles.heading}>Our Vision & Mission</h2>
@@ -58,32 +79,12 @@ const AboutUs=() => {
         </div>
       </section>
 
-      {/* Statistics Section */}
-      <section style={styles.statsSection}>
-        <div className="container text-center">
-          <h2 style={styles.heading}>Our Impact</h2>
-          <div className="row mt-4">
-            <div className="col-md-4">
-              <h3>100K+</h3>
-              <p>Job Listings</p>
-            </div>
-            <div className="col-md-4">
-              <h3>50K+</h3>
-              <p>Companies Connected</p>
-            </div>
-            <div className="col-md-4">
-              <h3>500K+</h3>
-              <p>Active Job Seekers</p>
-            </div>
-          </div>
-        </div>
-      </section>
       <Footer />
     </div>
   );
 };
 
-const styles={
+const styles = {
   aboutSection: {
     padding: '60px 0',
     backgroundColor: '#f8f9fa',
@@ -106,11 +107,6 @@ const styles={
   visionMissionSection: {
     padding: '60px 0',
     backgroundColor: '#ffffff',
-  },
-  statsSection: {
-    padding: '60px 0',
-    backgroundColor: '#007bff',
-    color: '#ffffff',
   },
 };
 

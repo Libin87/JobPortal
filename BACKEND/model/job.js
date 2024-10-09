@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const jobSchema = new mongoose.Schema({
   jobTitle: { type: String, required: true },
-  companyName: { type: String, required: true },
+  companyName:{type:String},
   location: { type: String, required: true },
   salary: { type: String, required: true },
   jobType: { type: String, required: true },
@@ -14,6 +14,9 @@ const jobSchema = new mongoose.Schema({
   contactDetails: { type: String, required: true },
   lastDate: { type: Date, required: true },
   datePosted: { type: Date, default: Date.now },
+  status: { type: String, default: 'active' },
+  approvalStatus: { type: String, default: 'pending' },
+  approvedBy: { type: String, default: null },
   userId: { 
     type: mongoose.Schema.Types.ObjectId,
     // required: true,

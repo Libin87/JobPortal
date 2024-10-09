@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate } from 'react-router-dom';
@@ -20,32 +18,84 @@ const LoginForm = () => {
     setShowPassword(!showPassword);
   };
 
+
+  // const submit = (e) => {
+  //   e.preventDefault();
+  //   const adminEmail = 'admin@gmail.com';
+  //   const adminPassword = 'admin123';
+  
+  //   if (input.email === adminEmail && input.password === adminPassword) {
+  //     alert('Admin Login successfully!!');
+  //     localStorage.setItem('authToken', 'adminToken');
+  //     localStorage.setItem('role', 'admin');
+  //     localStorage.setItem('name', 'Admin'); 
+  //     sessionStorage.setItem('userId', 'adminId'); 
+  //     sessionStorage.setItem('name', 'Admin'); 
+  //     navigate('/', { replace: true });
+  //   } else {
+  //     axios.post('http://localhost:3000/user/login', input)
+  //       .then((response) => {
+  //         if (response.data.message === 'Login successfully!!') {
+  //           console.log(response.data.message)
+  //           alert(response.data.message);
+  //           localStorage.setItem('authToken', response.data.token);
+  //           localStorage.setItem('role', response.data.role);
+  //           localStorage.setItem('name', response.data.name); 
+  
+  //           sessionStorage.setItem('userId', response.data._id); 
+  //           sessionStorage.setItem('name', response.data.name);
+  
+  //           navigate('/', { replace: true });
+  //         } else {
+  //           alert(response.data.message);
+  //         }
+  //       })
+  //       .catch(err => console.log(err));
+  //   }
+  // };
   const submit = (e) => {
     e.preventDefault();
     const adminEmail = 'admin@gmail.com';
     const adminPassword = 'admin123';
-
+  
     if (input.email === adminEmail && input.password === adminPassword) {
       alert('Admin Login successfully!!');
       localStorage.setItem('authToken', 'adminToken');
       localStorage.setItem('role', 'admin');
+      localStorage.setItem('name', 'Admin'); 
+      sessionStorage.setItem('userId', 'adminId'); 
+      sessionStorage.setItem('name', 'Admin'); 
       navigate('/', { replace: true });
     } else {
       axios.post('http://localhost:3000/user/login', input)
         .then((response) => {
           if (response.data.message === 'Login successfully!!') {
+            console.log(response.data.message)
             alert(response.data.message);
             localStorage.setItem('authToken', response.data.token);
             localStorage.setItem('role', response.data.role);
-            sessionStorage.setItem('userId', response.data._id);
+            localStorage.setItem('name', response.data.name); 
+  
+            sessionStorage.setItem('userId', response.data._id); 
+            sessionStorage.setItem('name', response.data.name);
+  
             navigate('/', { replace: true });
           } else {
             alert(response.data.message);
           }
         })
-        .catch(err => console.log(err));
+        .catch((err) => {
+          // Check if the error has a response with a message
+          if (err.response && err.response.data && err.response.data.message) {
+            alert(err.response.data.message);
+          } else {
+            console.error("An unexpected error occurred:", err);
+            alert("An unexpected error occurred. Please try again later.");
+          }
+        });
     }
   };
+  
 
   return (
     <div style={{ ...styles.background, backgroundImage: `url(${backgroundImage})` }}>
@@ -60,7 +110,7 @@ const LoginForm = () => {
                 className="form-control"
                 id="email"
                 name="email"
-                required
+                requireda
                 onChange={inputHandler}
                 style={styles.inputField}
               />
@@ -133,5 +183,4 @@ const styles = {
 };
 
 export default LoginForm;
-
 

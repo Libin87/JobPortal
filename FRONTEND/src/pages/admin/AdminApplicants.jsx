@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../Header';
 import axios from 'axios';
 import { Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import Navbar from '../../components/Navbar';
+import NavbarAdmin from './NavbarAdmin';
 
 const AdminApplicants = () => {
   const [applicants, setApplicants] = useState([]);
@@ -52,7 +53,7 @@ const AdminApplicants = () => {
 
   return (
     <div>
-      <Header style={{ marginBottom: '20px' }} />
+      <NavbarAdmin style={{ marginBottom: '20px' }} />
       <Container style={{ backgroundColor: '#423B47', marginBottom: '30px', borderRadius: '50px', maxWidth: '84.5%' }}>
         <h2 style={{ textAlign: 'center', fontWeight: 'bolder', marginTop: '40px', backgroundColor: '', color: 'white' }}>ADMIN REVIEW - JOB APPLICANTS</h2>
       </Container>

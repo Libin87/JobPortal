@@ -1,7 +1,7 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import Header from '../Header'
 import { Container } from '@mui/material'
+import NavbarAdmin from './NavbarAdmin'
 
 const AdminUsers = () => {
     const[data,setData]=useState([])
@@ -54,7 +54,7 @@ const AdminUsers = () => {
 
   return (
     <div>
-         <Header/>
+         <NavbarAdmin/>
          <Container  style={{backgroundColor:'#423B47',marginBottom:'30px',borderRadius:'50px',maxWidth:'84.5%'}}>
         <h2 style={{textAlign:'center',fontWeight:'bolder',marginTop:'40px',color:'aliceblue',}}>USERS LIST </h2>
         </Container>

@@ -1,16 +1,12 @@
-
 const mongoose = require('mongoose');
 
 const ProfileSchema = new mongoose.Schema({
-  // userId: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
-  companyName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  address: { type: String },
-  tagline: { type: String },
-  website: { type: String },
-  logoUrl: { type: String },
+  userId: { type: String, required: true },
+  cname:String,
+  email: String,
+  address: String,
+  tagline: String,
+  website: String,
+  logoUrl: String,
 });
-
-const Profile = mongoose.model('Profile', ProfileSchema);
-
-module.exports = Profile;
+module.exports = mongoose.model('Profile', ProfileSchema);

@@ -1,27 +1,34 @@
+
+
+
+
 // import React, { useState, useEffect } from 'react';
 // import 'bootstrap/dist/css/bootstrap.min.css';
-// import { NavLink, useNavigate,} from 'react-router-dom';
- 
+// import { NavLink, useNavigate } from 'react-router-dom';
+
 // const NavbarEmployee = () => {
-//   const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track login status
+//   const [isLoggedIn, setIsLoggedIn] = useState(false);
 //   const navigate = useNavigate();
 
 //   useEffect(() => {
-//     // Check if user is logged in (you can replace this with your actual auth check logic)
-//     const token = localStorage.getItem('authToken'); // Assuming you're storing a token after login
+//     const token = localStorage.getItem('authToken');
 //     if (token) {
 //       setIsLoggedIn(true);
+//       const logoutTimer = setTimeout(() => {
+//         handleLogout();
+//       },1800000);
+
+//       return () => clearTimeout(logoutTimer);
 //     }
-//   }, []);
+//   }, [isLoggedIn]);
 
 //   const handleLogout = () => {
-//     // Clear the token and set login state to false
-//     localStorage.removeItem('authToken'); // Remove token from local storage
+//     localStorage.removeItem('authToken'); 
+//     localStorage.removeItem('role');
 //     setIsLoggedIn(false);
-//     navigate('/login'); // Redirect to login page after logout
+//     navigate('/login'); 
 //   };
 
-  
 //   return (
 //     <nav className="navbar navbar-expand-lg navbar-light bg-light" style={styles.navbar}>
 //       <div className="container">
@@ -46,10 +53,8 @@
 //                 HomePage
 //               </NavLink>
 //             </li>
-            
 //             <li className="nav-item">
-//               <NavLink className="nav-link" to="employeepage" style={styles.navLink} 
-//               >
+//               <NavLink className="nav-link" to="employeepage" style={styles.navLink}>
 //                 Employee Dashboard
 //               </NavLink>
 //             </li>
@@ -64,7 +69,6 @@
 //               </NavLink>
 //             </li>
 //             <li className="nav-item">
-//               {/* Conditionally render the Login or Logout button */}
 //               {isLoggedIn ? (
 //                 <button className="nav-link btn btn-danger text-white ms-2" onClick={handleLogout} style={styles.logoutButton}>
 //                   Logout
@@ -90,7 +94,7 @@
 //   brand: {
 //     fontSize: '1.5rem',
 //     fontWeight: 'bold',
-//     color: '#360275', 
+//     color: '#360275',
 //   },
 //   navLink: {
 //     fontSize: '1rem',
@@ -99,8 +103,8 @@
 //     transition: 'color 0.3s ease',
 //   },
 //   loginButton: {
-//     backgroundColor: '#360275', 
-//     borderColor: '#360275',     
+//     backgroundColor: '#360275',
+//     borderColor: '#360275',
 //     fontSize: '1rem',
 //   },
 //   logoutButton: {
@@ -112,32 +116,36 @@
 // export default NavbarEmployee;
 
 
-
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { NavLink, useNavigate } from 'react-router-dom';
 
 const NavbarEmployee = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState(''); 
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
+    const storedUserName = localStorage.getItem('name'); 
+
     if (token) {
       setIsLoggedIn(true);
+      setUserName(storedUserName); 
       const logoutTimer = setTimeout(() => {
         handleLogout();
-      },1800000);
+      }, 1800000);
 
       return () => clearTimeout(logoutTimer);
     }
   }, [isLoggedIn]);
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken'); 
+    localStorage.removeItem('authToken');
     localStorage.removeItem('role');
+    localStorage.removeItem('name'); 
     setIsLoggedIn(false);
-    navigate('/login'); 
+    navigate('/login');
   };
 
   return (
@@ -157,15 +165,20 @@ const NavbarEmployee = () => {
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
+        <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul className="navbar-nav align-items-center">
             <li className="nav-item">
               <NavLink className="nav-link" to="/" style={styles.navLink}>
                 HomePage
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to="employeepage" style={styles.navLink}>
+            <NavLink
+                to="/employeepage"
+                className="nav-link btn"
+                activeClassName="active"
+                style={styles.navLink}
+              >
                 Employee Dashboard
               </NavLink>
             </li>
@@ -179,6 +192,13 @@ const NavbarEmployee = () => {
                 About
               </NavLink>
             </li>
+            {isLoggedIn && (
+              <li className="nav-item">
+                <span className="navbar-text" style={styles.userName}>
+                  Hello, {userName}!
+                </span>
+              </li>
+            )}
             <li className="nav-item">
               {isLoggedIn ? (
                 <button className="nav-link btn btn-danger text-white ms-2" onClick={handleLogout} style={styles.logoutButton}>
@@ -212,6 +232,12 @@ const styles = {
     color: '#333',
     padding: '8px 16px',
     transition: 'color 0.3s ease',
+  },
+  userName: {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#F04B3F', 
+    marginRight: '10px',
   },
   loginButton: {
     backgroundColor: '#360275',
