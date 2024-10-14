@@ -7,14 +7,14 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken'); 
+    const token = sessionStorage.getItem('authToken'); 
     if (token) {
       setIsLoggedIn(true);
     }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    sessionStorage.removeItem('authToken');
     setIsLoggedIn(false);
     navigate('/login');
   };

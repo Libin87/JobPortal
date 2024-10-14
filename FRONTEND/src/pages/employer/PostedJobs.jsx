@@ -329,25 +329,25 @@ const PostedJobs = () => {
 
   // Validation function
   // Modify the validation function to ignore companyName
-const validateField = (name, value) => {
-  let errorMsg = '';
+  const validateField = (name, value) => {
+    let errorMsg = '';
 
-  // If the field is 'companyName' and you don't need to validate it, skip
-  if (name === 'companyName') return '';
+    // If the field is 'companyName' and you don't need to validate it, skip
+    if (name === 'companyName') return '';
 
-  // Convert the value to a string to ensure trim() works
-  const stringValue = String(value).trim();
+    // Convert the value to a string to ensure trim() works
+    const stringValue = String(value).trim();
 
-  if (!stringValue) {
-    errorMsg = `${name} is required.`;
-  } else if (name === 'salary' && value < 0) {
-    errorMsg = 'Salary cannot be negative.';
-  } else if (name === 'experience' && !/^\d+$/.test(stringValue)) {
-    errorMsg = 'Experience must be a number.';
-  }
+    if (!stringValue) {
+      errorMsg = `${name} is required.`;
+    } else if (name === 'salary' && value < 0) {
+      errorMsg = 'Salary cannot be negative.';
+    } else if (name === 'experience' && !/^\d+$/.test(stringValue)) {
+      errorMsg = 'Experience must be a number.';
+    }
 
-  return errorMsg;
-};
+    return errorMsg;
+  };
 
 
   // Handle validation on blur (when leaving the field)
@@ -367,7 +367,7 @@ const validateField = (name, value) => {
     // Check for errors before submitting
     let hasError = false;
     const newErrors = {};
-    
+
     // Validate each field and collect errors
     Object.keys(jobToUpdate).forEach((key) => {
       const errorMsg = validateField(key, jobToUpdate[key]);
@@ -384,7 +384,7 @@ const validateField = (name, value) => {
         ...prevErrors,
         [jobId]: { ...newErrors },
       }));
-      toast.error('Please fix the validation errors before submitting.'); 
+      toast.error('Please fix the validation errors before submitting.');
       console.log(hasError)// Show toast only if there are errors
       return; // Prevent submission
     }
@@ -435,6 +435,8 @@ const validateField = (name, value) => {
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Salary</StyledTableCell>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Type</StyledTableCell>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Experience</StyledTableCell>
+              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Posted Date</StyledTableCell>
+              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Status</StyledTableCell>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Actions</StyledTableCell>
             </TableRow>
           </TableHead>
@@ -530,8 +532,18 @@ const validateField = (name, value) => {
                     ) : (
                       job.experience
                     )}
+
+                  </StyledTableCell>
+                  <StyledTableCell style={{ textAlign: 'center' }}>
+                    {new Date(job.datePosted).toLocaleDateString()}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ textAlign: 'center' }}>
+                    {(job.
+                      approvalStatus)}
                   </StyledTableCell>
                   <StyledTableCell>
+
+
                     <ButtonContainer>
                       {editRowId === job._id ? (
                         <>

@@ -1,59 +1,38 @@
 
-
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios'; // Import axios
+import { NavLink, useNavigate } from 'react-router-dom';
 
 const NavbarEmployer = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const storedUserName = localStorage.getItem('name');
+    // Retrieve user details from sessionStorage
+    const storedUserName = sessionStorage.getItem('name');
 
-    if (token) {
+    if (storedUserName) {
       setIsLoggedIn(true);
       setUserName(storedUserName);
+      
+      // Set logout timer for 30 minutes
       const logoutTimer = setTimeout(() => {
         handleLogout();
-      }, 1800000); // Logout after 30 minutes
+      }, 1800000); // 30 minutes
 
       return () => clearTimeout(logoutTimer);
     }
   }, [isLoggedIn]);
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('role');
-    localStorage.removeItem('name');
+    sessionStorage.removeItem('role');
+    sessionStorage.removeItem('name');
+    sessionStorage.removeItem('cname'); 
+    sessionStorage.removeItem('userId'); 
     setIsLoggedIn(false);
     navigate('/login');
   };
-
-  // Axios instance for API calls
-  const api = axios.create({
-    baseURL: 'http://localhost:5000/api', // Adjust the base URL as needed
-  });
-
-  const fetchData = async () => {
-    try {
-      const response = await api.get('/some-endpoint'); // Example endpoint
-      console.log(response.data);
-    } catch (error) {
-      if (error.response) {
-        console.error('Error Response:', error.response.data);
-      } else if (error.request) {
-        console.error('No Response:', error.request);
-      } else {
-        console.error('Error', error.message);
-      }
-    }
-  };
-
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light" style={styles.navbar}>
       <div className="container">

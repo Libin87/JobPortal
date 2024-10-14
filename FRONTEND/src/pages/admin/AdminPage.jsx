@@ -7,7 +7,7 @@ import Footer from '../../components/Footer';
 const AdminPage = () => {
   const navigate = useNavigate();
   useEffect(() => {
-    const role = localStorage.getItem('role'); 
+    const role = sessionStorage.getItem('role'); 
     if (!role || role !== 'admin') {
       navigate('/login'); 
     }
@@ -20,7 +20,7 @@ const AdminPage = () => {
         style={{
           maxWidth: '100rem',
           marginTop: '50px',
-          backgroundColor: '#423B47',
+          backgroundColor: '#4B647D',
           borderRadius: '20px',
           paddingLeft: '100px',
           paddingRight: '100px',

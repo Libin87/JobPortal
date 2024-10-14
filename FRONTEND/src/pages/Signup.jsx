@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -8,11 +8,17 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import backgroundImage from '../images/login.jpg';
 
 const Signup = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (sessionStorage.getItem('userId')) {
+      navigate('/');
+    }
+  }, [navigate]);
   const [input, setInput] = useState({});
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const navigate = useNavigate();
+  
 
   const inputHandler = (e) => {
     const { name, value } = e.target;
@@ -100,22 +106,76 @@ const Signup = () => {
     setErrors((prevErrors) => ({ ...prevErrors, ...fieldErrors }));
   };
 
+  // const validateAllFields = () => {
+  //   const allErrors = {};
+  //   Object.keys(input).forEach((key) => {
+  //     Object.assign(allErrors, validateField(key, input[key]));
+  //   });
+  //   return allErrors;
+  // };
+
+  // const submit = (e) => {
+  //   e.preventDefault();
+  //   const allErrors = validateAllFields();
+  //   if (Object.keys(allErrors).length > 0) {
+  //     setErrors(allErrors);
+  //     return;
+  //   }
+
+  //   axios.post('http://localhost:3000/user/signup', input)
+  //     .then((response) => {
+  //       if (response.data.message === 'Registered successfully') {
+  //         alert(response.data.message);
+  //         navigate('/login', { replace: true });
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       let errorMessage = ''; // Initialize the error message variable
+
+  //       if (err.response && err.response.status === 400) {
+  //         // Check for existing email
+  //         if (err.response.data.message === 'Email already exists') {
+  //           errorMessage += 'Email already exists. ';
+  //           setErrors((prevErrors) => ({ ...prevErrors, email: 'Email already exists' }));
+  //         }
+  //         // Check for existing phone number
+  //         if (err.response.data.message === 'Phone number already exists') {
+  //           errorMessage += 'Phone number already exists. ';
+  //           setErrors((prevErrors) => ({ ...prevErrors, phone: 'Phone number already exists' }));
+  //         }
+
+  //         // Show alert with all relevant error messages
+  //         if (errorMessage) {
+  //           alert(errorMessage.trim());
+  //         }
+  //       } else {
+  //         console.log(err);
+  //       }
+  //     });
+  // };
   const validateAllFields = () => {
     const allErrors = {};
-    Object.keys(input).forEach((key) => {
-      Object.assign(allErrors, validateField(key, input[key]));
+    const requiredFields = ['name', 'phone', 'email', 'password', 'confirmPassword', 'role'];
+  
+    // Loop through required fields to ensure each one has validation
+    requiredFields.forEach((field) => {
+      const value = input[field] || ''; // Get field value or empty string if undefined
+      const fieldErrors = validateField(field, value); // Validate the field
+      Object.assign(allErrors, fieldErrors); // Merge any errors found into allErrors
     });
+  
     return allErrors;
   };
-
+  
   const submit = (e) => {
     e.preventDefault();
     const allErrors = validateAllFields();
+    
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
       return;
     }
-
+  
     axios.post('http://localhost:3000/user/signup', input)
       .then((response) => {
         if (response.data.message === 'Registered successfully') {
@@ -125,7 +185,7 @@ const Signup = () => {
       })
       .catch((err) => {
         let errorMessage = ''; // Initialize the error message variable
-
+  
         if (err.response && err.response.status === 400) {
           // Check for existing email
           if (err.response.data.message === 'Email already exists') {
@@ -137,7 +197,7 @@ const Signup = () => {
             errorMessage += 'Phone number already exists. ';
             setErrors((prevErrors) => ({ ...prevErrors, phone: 'Phone number already exists' }));
           }
-
+  
           // Show alert with all relevant error messages
           if (errorMessage) {
             alert(errorMessage.trim());
@@ -147,6 +207,7 @@ const Signup = () => {
         }
       });
   };
+  
 
 
   return (

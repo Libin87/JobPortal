@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import backgroundImage from '../images/login.jpg'; 
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import GoogleLoginComponent from './GoogleLoginComponent';
 
 const LoginForm = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (sessionStorage.getItem('userId')) {
+      navigate('/');
+    }
+  }, [navigate]);
   const [input, setInput] = useState({});
   const [showPassword, setShowPassword] = useState(false);
 
@@ -17,42 +24,6 @@ const LoginForm = () => {
   const handlePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-
-
-  // const submit = (e) => {
-  //   e.preventDefault();
-  //   const adminEmail = 'admin@gmail.com';
-  //   const adminPassword = 'admin123';
-  
-  //   if (input.email === adminEmail && input.password === adminPassword) {
-  //     alert('Admin Login successfully!!');
-  //     localStorage.setItem('authToken', 'adminToken');
-  //     localStorage.setItem('role', 'admin');
-  //     localStorage.setItem('name', 'Admin'); 
-  //     sessionStorage.setItem('userId', 'adminId'); 
-  //     sessionStorage.setItem('name', 'Admin'); 
-  //     navigate('/', { replace: true });
-  //   } else {
-  //     axios.post('http://localhost:3000/user/login', input)
-  //       .then((response) => {
-  //         if (response.data.message === 'Login successfully!!') {
-  //           console.log(response.data.message)
-  //           alert(response.data.message);
-  //           localStorage.setItem('authToken', response.data.token);
-  //           localStorage.setItem('role', response.data.role);
-  //           localStorage.setItem('name', response.data.name); 
-  
-  //           sessionStorage.setItem('userId', response.data._id); 
-  //           sessionStorage.setItem('name', response.data.name);
-  
-  //           navigate('/', { replace: true });
-  //         } else {
-  //           alert(response.data.message);
-  //         }
-  //       })
-  //       .catch(err => console.log(err));
-  //   }
-  // };
   const submit = (e) => {
     e.preventDefault();
     const adminEmail = 'admin@gmail.com';
@@ -60,9 +31,8 @@ const LoginForm = () => {
   
     if (input.email === adminEmail && input.password === adminPassword) {
       alert('Admin Login successfully!!');
-      localStorage.setItem('authToken', 'adminToken');
-      localStorage.setItem('role', 'admin');
-      localStorage.setItem('name', 'Admin'); 
+      sessionStorage.setItem('role', 'admin');
+      sessionStorage.setItem('name', 'Admin'); 
       sessionStorage.setItem('userId', 'adminId'); 
       sessionStorage.setItem('name', 'Admin'); 
       navigate('/', { replace: true });
@@ -72,10 +42,8 @@ const LoginForm = () => {
           if (response.data.message === 'Login successfully!!') {
             console.log(response.data.message)
             alert(response.data.message);
-            localStorage.setItem('authToken', response.data.token);
-            localStorage.setItem('role', response.data.role);
-            localStorage.setItem('name', response.data.name); 
-  
+            sessionStorage.setItem('role', response.data.role);
+            sessionStorage.setItem('name', response.data.name); 
             sessionStorage.setItem('userId', response.data._id); 
             sessionStorage.setItem('name', response.data.name);
   
@@ -135,7 +103,8 @@ const LoginForm = () => {
               </span>
             </div>
             <button type="submit" className="btn w-100" style={styles.button}>Login</button>
-            <br />
+            <br /><br />
+            <GoogleLoginComponent/>
             <a href="/signup" className="d-block text-center mt-3" style={styles.link}>Signup</a>
             <a href="/forgotpassword" className="d-block text-center mt-3" style={styles.link}>Forgot Password?</a>
           </form>

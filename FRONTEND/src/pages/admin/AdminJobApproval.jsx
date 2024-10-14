@@ -56,8 +56,10 @@ const AdminJobApproval = () => {
   }, []);
 
   const handleApprove = async (jobId) => {
+    const approvalDate = new Date().toISOString(); // Capture current date and time
+    console.log(approvalDate)
     try {
-      await axios.put(`http://localhost:3000/jobs/approve/${jobId}`);
+      await axios.put(`http://localhost:3000/jobs/approve/${jobId}`, { approvalDate });
       setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
       toast.success('Job approved successfully!');
     } catch (err) {
@@ -66,6 +68,7 @@ const AdminJobApproval = () => {
       toast.error('Failed to approve the job.');
     }
   };
+  
 
   const handleReject = async (jobId) => {
     try {

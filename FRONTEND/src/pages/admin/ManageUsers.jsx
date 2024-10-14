@@ -81,9 +81,10 @@ const ManageUsers = () => {
           <TableHead>
             <TableRow>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>#</StyledTableCell>
-              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Username</StyledTableCell>
+              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Name</StyledTableCell>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Email</StyledTableCell>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Phone</StyledTableCell>
+              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Created On</StyledTableCell>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Role</StyledTableCell>
               <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Actions</StyledTableCell>
             </TableRow>
@@ -96,6 +97,7 @@ const ManageUsers = () => {
                   <StyledTableCell>{user.name}</StyledTableCell>
                   <StyledTableCell>{user.email}</StyledTableCell>
                   <StyledTableCell>{user.phone}</StyledTableCell>
+                  <StyledTableCell>{new Date(user.createdAt).toLocaleDateString()}</StyledTableCell>
                   <StyledTableCell>{user.role}</StyledTableCell>
                   <StyledTableCell>
                     <ButtonContainer>

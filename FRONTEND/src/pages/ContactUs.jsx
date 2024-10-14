@@ -97,7 +97,7 @@ const ContactUs = () => {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const role = localStorage.getItem('role');
+    const role = sessionStorage.getItem('role');
     setUserRole(role);
   }, []);
 
