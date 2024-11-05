@@ -204,7 +204,7 @@ const LoginForm = () => {
     const adminPassword = 'admin123';
 
     if (input.email === adminEmail && input.password === adminPassword) {
-      alert('Admin Login successfully!!');
+      // alert('Admin Login successfully!!');
       sessionStorage.setItem('role', 'admin');
       sessionStorage.setItem('name', 'Admin');
       sessionStorage.setItem('userId', 'adminId');

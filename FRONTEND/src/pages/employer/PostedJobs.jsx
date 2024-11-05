@@ -650,8 +650,10 @@ const handlePayment = async (jobId) => {
     const totalAmount=500
     const orderData = await orderResponse.json();
 
+    const razorpayKey = process.env.REACT_APP_RAZORPAY_KEY;
     const options = {
-      key: '', // Replace with Razorpay Key ID
+      key: razorpayKey,
+      // key: 'rzp_test_bD1Alu6Su7sKSO', 
       amount: parseInt(totalAmount * 100),
       currency: "INR",
       name: 'Job Portal',

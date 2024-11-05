@@ -57,11 +57,12 @@ const NavbarEmployer = () => {
                 HomePage
               </NavLink>
             </li>
-            <li className="nav-item">
+            <li className="nav-item" id='admin-button'>
               <NavLink
                 to="/adminpage"
                 className="nav-link btn"
                 activeClassName="active"
+                
                 style={styles.navLink}
               >
                 Admin Dashboard

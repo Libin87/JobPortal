@@ -36,21 +36,21 @@ const AdminPage = () => {
         <br />
         <Grid container spacing={2} justifyContent="center">
           <Grid item xs={12} sm={3} md={3}>
-            <Link to="/manageUsers">
+            <Link to="/manageUsers" id='manage-users'>
               <Button variant="contained" fullWidth style={{ backgroundColor: '#0D6EFD' }}>
                 Manage Users
               </Button>
             </Link>
           </Grid>
           <Grid item xs={12} sm={3} md={3}>
-            <Link to="/PostedJobsAdmin">
+            <Link to="/PostedJobsAdmin" id='posted-jobs'>
               <Button variant="contained" fullWidth style={{ backgroundColor: 'GREEN' }}>
                 Posted Jobs
               </Button>
             </Link>
           </Grid>
           <Grid item xs={12} sm={3} md={3}>
-            <Link to="/siteReport">
+            <Link to="/siteReport" id='report'>
               <Button variant="contained" color="secondary" fullWidth>
                 View Reports
               </Button>
@@ -58,7 +58,7 @@ const AdminPage = () => {
           </Grid>
           
           <Grid item xs={12} sm={3} md={3}>
-            <Link to="/adminJobAprooval">
+            <Link to="/adminJobAprooval" id='approval'>
               <Button variant="contained" fullWidth style={{ backgroundColor: '#00CCCD' }}>
                 Notifications
               </Button>
