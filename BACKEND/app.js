@@ -26,6 +26,8 @@ require('dotenv').config();
 require('./db/connection'); 
 const siteReportRoute = require('./routes/siteReport');
 const jobRoutes = require('./routes/jobs');
+const profileRoute = require('./routes/EmpProfileRoute'); // Import the route
+const paymentRoutes=require('./routes/paymentRoutes');
 const app = express();
 
 app.use(morgan('dev'));  // Log requests
@@ -38,6 +40,9 @@ app.use('/profile', profileRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/jobs', jobRoutes);
 app.use('/api/', siteReportRoute);
+app.use('/Employeeprofile', profileRoute);
+app.use('/api/payment', paymentRoutes);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on PORT ${PORT}`);

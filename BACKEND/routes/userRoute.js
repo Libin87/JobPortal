@@ -179,39 +179,12 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        res.status(200).json({ message: "Login successfully!!", role: user.role, name: user.name, _id: user._id });
+        res.status(200).json({ message: "Login successfully!!", role: user.role, name: user.name, _id: user._id,email:user.email,phone:user.phone });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error logging in" });
     }
 });
-
-// Signup Route
-// router.post('/signup', async (req, res) => {
-//     try {
-//         console.log(req.body);
-//         const { email, phone } = req.body;
-
-//         // Check if the email or phone already exists
-//         const existingEmail = await userData.findOne({ email });
-//         const existingPhone = await userData.findOne({ phone });
-
-//         if (existingEmail) {
-//             return res.status(400).json({ message: 'Email already exists' });
-//         }
-
-//         if (existingPhone) {
-//             return res.status(400).json({ message: 'Phone number already exists' });
-//         }
-
-//         const newUser = new userData(req.body);
-//         await newUser.save();
-//         res.json({ message: 'Registered successfully' });
-//     } catch (error) {
-//         res.status(500).json('Unable to post');
-//         console.log(error);
-//     }
-// });
 
 router.post('/signup', async (req, res) => {
     try {
@@ -280,5 +253,92 @@ router.delete('/users/:id', async (req, res) => {
         res.status(500).json({ message: 'Error deleting user' });
     }
 });
+
+// Assuming you have userData defined and bcrypt imported as in your signup route
+
+router.put('/update/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { name, phone } = req.body;
+        console.log('Request body:', req.body); // Add this line to check the incoming data
+
+        // Check if the email or phone already exists, excluding the current user
+        const existingPhone = await userData.findOne({ phone, _id: { $ne: userId } });
+
+       
+
+        if (existingPhone) {
+            return res.status(400).json({ message: 'Phone number already exists' });
+        }
+
+        // Update user information
+        const updatedUser = await userData.findByIdAndUpdate(userId, req.body, {
+            new: true, // Return the updated document
+        });
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ message: 'User updated successfully', updatedUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Unable to update user' });
+    }
+});
+
+// In your routes/userRoute.js
+
+router.get('/checkPhoneNumber', async (req, res) => {
+    try {
+        const { phone } = req.query;
+        const existingUser = await userData.findOne({ phone });
+
+        if (existingUser) {
+            res.json({ exists: true, userId: existingUser._id });
+        } else {
+            res.json({ exists: false });
+        }
+    } catch (error) {
+        console.error("Error checking phone number:", error);
+        res.status(500).json({ message: "Error checking phone number" });
+    }
+});
+
+
+//google
+
+
+const User = require('../model/Guser');
+
+// Route to handle Google Sign-In data
+router.post('/google-signin', async (req, res) => {
+    const { name, email, role, googleId } = req.body;
+
+    try {
+        // Check if the user already exists
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // Update existing user's Google ID if it's not set
+            if (!user.googleId) {
+                user.googleId = googleId;
+                await user.save();
+            }
+        } else {
+            // Create a new user if one doesn't exist
+            user = new User({ name, email, role, googleId });
+            await user.save();
+        }
+
+        // Send back user info to the client if needed
+        res.status(201).json({ message: 'User saved successfully', user });
+    } catch (error) {
+        console.error("Error saving user:", error);
+        res.status(500).json({ message: 'Error saving user data' });
+    }
+});
+
+
 
 module.exports = router;

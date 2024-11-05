@@ -94,8 +94,10 @@ import AdminJobApproval from './pages/admin/AdminJobApproval';
 import ApprovedJobs from './pages/employer/ApprovedJobs';
 import EmployeeProfile from './pages/employee/EmployeeProfile';
 import GoogleLoginComponent from './pages/GoogleLoginComponent';
+import ApplicantPage from './pages/employer/ApplicantPage';
+import JobApplications from './pages/employee/JobApplications';
+import PaymentComponent from './pages/employer/PaymentComponent';
 
-// Helper component for role-based protection
 const ProtectedRoute = ({ redirectPath = '/login', allowedRole }) => {
   const isLoggedIn = sessionStorage.getItem('userId') !== null;
   const userRole = sessionStorage.getItem('role');
@@ -109,6 +111,61 @@ const ProtectedRoute = ({ redirectPath = '/login', allowedRole }) => {
   return <Outlet />;
 };
 
+// function App() {
+//   return (
+//     <div className='App'>
+//       <Routes>
+//         {/* Public Routes */}
+//         <Route path='/' element={<HomePage />} />
+//         <Route path='/login' element={<Login />} />
+//         <Route path='/signup' element={<Signup />} />
+//         <Route path='/forgotpassword' element={<ForgotPassword />} />
+//         <Route path="/user/resetpassword/:token" element={<ResetPassword />} />
+//         <Route path='/contactus' element={<ContactUs />} />
+//         <Route path='/about' element={<AboutUs />} />
+//         <Route path='/viewjob' element={<Viewjob />} />
+//         <Route path='/navbar' element={<Navbar />} />
+//         <Route path='/footer' element={<Footer />} />
+//         <Route path='/googlelogin' element={<GoogleLoginComponent />} />
+
+//         {/* Protected Routes for Admin */}
+//         <Route element={<ProtectedRoute redirectPath="/login" allowedRole="admin" />}>
+//           <Route path='/adminpage' element={<AdminPage />} />
+//           <Route path='/adminpage1' element={<AdminApplicants />} />
+//           <Route path='/manageUsers' element={<ManageUsers />} />
+//           <Route path='/siteReport' element={<SiteReport />} />
+//           <Route path='/postedJobsAdmin' element={<PostedJobsAdmin />} />
+//           <Route path='/adminJobApproval' element={<AdminJobApproval />} />
+//           <Route path='/navbaradmin' element={<NavbarAdmin />} />
+//           <Route path='/adminJobAprooval' element={<AdminJobApproval />} />
+//         <Route path='/contactus' element={<ContactUs />} />
+//         <Route path='/about' element={<AboutUs />} />
+//         </Route>
+
+//         {/* Protected Routes for Employer */}
+//         <Route element={<ProtectedRoute redirectPath="/" allowedRole="employer" />}>
+//           <Route path='/employerpage' element={<EmployerPage />} />
+//           <Route path='/employerprofile' element={<EmployerProfile />} />
+//           <Route path='/postedJobs' element={<PostedJobs />} />
+//           <Route path='/approvedJobs' element={<ApprovedJobs />} />
+//           <Route path='/navbaremployer' element={<NavbarEmployer />} />
+//         <Route path='/contactus' element={<ContactUs />} />
+//         <Route path='/about' element={<AboutUs />} />
+//         </Route>
+
+//         {/* Protected Routes for Employee */}
+//         <Route element={<ProtectedRoute redirectPath="/" allowedRole="employee" />}>
+//           <Route path='/employeepage' element={<EmployeePage />} />
+//           <Route path='/navbaremployee' element={<NavbarEmployee />} />
+//           <Route path='/EmployeeProfile' element={<EmployeeProfile />} />
+//           <Route path='/contactus' element={<ContactUs />} />
+//           <Route path='/about' element={<AboutUs />} />
+
+//         </Route>
+//       </Routes>
+//     </div>
+//   );
+// }
 function App() {
   return (
     <div className='App'>
@@ -119,12 +176,16 @@ function App() {
         <Route path='/signup' element={<Signup />} />
         <Route path='/forgotpassword' element={<ForgotPassword />} />
         <Route path="/user/resetpassword/:token" element={<ResetPassword />} />
-        <Route path='/contactus' element={<ContactUs />} />
-        <Route path='/about' element={<AboutUs />} />
         <Route path='/viewjob' element={<Viewjob />} />
         <Route path='/navbar' element={<Navbar />} />
         <Route path='/footer' element={<Footer />} />
         <Route path='/googlelogin' element={<GoogleLoginComponent />} />
+
+        {/* Protected Routes for Common Pages */}
+        <Route element={<ProtectedRoute redirectPath="/" />}>
+          <Route path='/contactus' element={<ContactUs />} />
+          <Route path='/about' element={<AboutUs />} />
+        </Route>
 
         {/* Protected Routes for Admin */}
         <Route element={<ProtectedRoute redirectPath="/login" allowedRole="admin" />}>
@@ -135,28 +196,34 @@ function App() {
           <Route path='/postedJobsAdmin' element={<PostedJobsAdmin />} />
           <Route path='/adminJobApproval' element={<AdminJobApproval />} />
           <Route path='/navbaradmin' element={<NavbarAdmin />} />
+          <Route path='/adminJobAprooval' element={<AdminJobApproval />} />
         </Route>
 
         {/* Protected Routes for Employer */}
-        <Route element={<ProtectedRoute redirectPath="/" allowedRole="employer" />}>
+        <Route element={<ProtectedRoute redirectPath="/login" allowedRole="employer" />}>
           <Route path='/employerpage' element={<EmployerPage />} />
           <Route path='/employerprofile' element={<EmployerProfile />} />
           <Route path='/postedJobs' element={<PostedJobs />} />
           <Route path='/approvedJobs' element={<ApprovedJobs />} />
           <Route path='/navbaremployer' element={<NavbarEmployer />} />
+          <Route path='/Applicants' element={<ApplicantPage />} />
+          <Route path='/payment' element={<PaymentComponent/>}/>
+
         </Route>
 
         {/* Protected Routes for Employee */}
-        <Route element={<ProtectedRoute redirectPath="/" allowedRole="employee" />}>
+        <Route element={<ProtectedRoute redirectPath="/login" allowedRole="employee" />}>
           <Route path='/employeepage' element={<EmployeePage />} />
           <Route path='/navbaremployee' element={<NavbarEmployee />} />
           <Route path='/EmployeeProfile' element={<EmployeeProfile />} />
+          <Route path='/jobApplications' element={<JobApplications />} />
 
         </Route>
       </Routes>
     </div>
   );
 }
+
 
 export default App;
 

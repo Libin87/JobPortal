@@ -6,7 +6,7 @@ const userSchema=mongoose.Schema({
     password:String,
     email:String,
     phone:Number,
-    role: { type: String, required: true,
+    role: { type: String,
          enum: ['employee', 'employer'] },
     createdAt:{
         type:Date,

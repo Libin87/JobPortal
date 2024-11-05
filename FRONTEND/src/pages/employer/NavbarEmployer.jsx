@@ -30,6 +30,8 @@ const NavbarEmployer = () => {
     sessionStorage.removeItem('name');
     sessionStorage.removeItem('cname'); 
     sessionStorage.removeItem('userId'); 
+    sessionStorage.removeItem('email'); 
+    sessionStorage.removeItem('phone');  
     setIsLoggedIn(false);
     navigate('/login');
   };

@@ -1,7 +1,7 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const Footer=() => {
+const Footer = () => {
   return (
     <footer style={styles.footer}>
       <div className="container">
@@ -18,20 +18,10 @@ const Footer=() => {
               <a href="#" style={styles.icon}><i className="fab fa-instagram"></i></a>
             </p>
           </div>
-          <div className="col-md-2">
+          <div className="col-md-4">
             <h5 style={styles.heading}>Company</h5>
             <ul style={styles.list}>
               <li><a href="/about" style={styles.link}>About Us</a></li>
-              <li><a href="/careers" style={styles.link}>Careers</a></li>
-              <li><a href="/contact" style={styles.link}>Contact Us</a></li>
-            </ul>
-          </div>
-          <div className="col-md-2">
-            <h5 style={styles.heading}>Resources</h5>
-            <ul style={styles.list}>
-              <li><a href="/support" style={styles.link}>Support</a></li>
-              <li><a href="/terms" style={styles.link}>Terms & Conditions</a></li>
-              <li><a href="/privacy" style={styles.link}>Privacy Policy</a></li>
             </ul>
           </div>
           <div className="col-md-4">
@@ -51,7 +41,7 @@ const Footer=() => {
   );
 };
 
-const styles={
+const styles = {
   footer: {
     backgroundColor: '#f5f5f5',
     color: '#333', 

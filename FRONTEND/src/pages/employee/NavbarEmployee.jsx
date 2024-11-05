@@ -29,7 +29,9 @@ const NavbarEmployee = () => {
     sessionStorage.removeItem('role');
     sessionStorage.removeItem('name');
     sessionStorage.removeItem('cname'); 
-    sessionStorage.removeItem('userId'); 
+    sessionStorage.removeItem('userId');
+    sessionStorage.removeItem('email'); 
+    sessionStorage.removeItem('phone');  
     setIsLoggedIn(false);
     navigate('/login');
   };

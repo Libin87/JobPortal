@@ -299,5 +299,30 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
+// fetch company name
+router.get('/company/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const company = await Profile.findOne({ userId });
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+    res.json({ companyName: company.cname });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+router.get('/logo/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const company = await Profile.findOne({ userId });
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+    res.json({ logoUrl: company.logoUrl });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 module.exports = router;
 
