@@ -44,7 +44,7 @@ const AdminJobApproval = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/pending`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/jobs/pending`);
         setJobs(response.data);
       } catch (err) {
         console.error('Error fetching jobs:', err);
@@ -59,7 +59,7 @@ const AdminJobApproval = () => {
     const approvalDate = new Date().toISOString(); // Capture current date and time
     console.log(approvalDate)
     try {
-      await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/approve/${jobId}`, { approvalDate });
+      await axios.put(`${process.env.REACT_APP_BASE_URL}/jobs/approve/${jobId}`, { approvalDate });
       setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
       toast.success('Job approved successfully!');
     } catch (err) {
@@ -72,7 +72,7 @@ const AdminJobApproval = () => {
 
   const handleReject = async (jobId) => {
     try {
-      await axios.delete(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/reject/${jobId}`);
+      await axios.delete(`${process.env.REACT_APP_BASE_URL}/jobs/reject/${jobId}`);
       setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
       toast.success('Job rejected successfully!');
     } catch (err) {

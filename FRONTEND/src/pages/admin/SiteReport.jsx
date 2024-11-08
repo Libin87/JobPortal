@@ -30,7 +30,7 @@
 //   useEffect(() => {
 //     const fetchReportData = async () => {
 //       try {
-//         const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/siteReport');
+//         const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/siteReport');
 //         setReport(response.data);
 //       } catch (err) {
 //         console.error('Error fetching site report data:', err);
@@ -189,7 +189,7 @@ const SiteReport = () => {
   useEffect(() => {
     const fetchReportData = async () => {
       try {
-        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/siteReport`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/siteReport`);
         setReport(response.data);
         console.log('Report Data:', response.data);
       } catch (err) {

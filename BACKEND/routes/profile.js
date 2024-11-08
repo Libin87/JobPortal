@@ -29,7 +29,7 @@
 // // Create or update profile
 // router.post('/create', upload.single('logo'), async (req, res) => {
 //   try {
-//     const logoUrl = req.file ? `${ProcessingInstruction.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
+//     const logoUrl = req.file ? `${process.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
 //     const profileData = { ...req.body, logoUrl };
 
 //     const newProfile = new Profile(profileData);
@@ -42,7 +42,7 @@
 
 // router.post('/update', upload.single('logo'), async (req, res) => {
 //   try {
-//     const logoUrl = req.file ? `${ProcessingInstruction.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
+//     const logoUrl = req.file ? `${process.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
 //     const updatedData = { ...req.body, logoUrl };
 
 //     const updatedProfile = await Profile.findOneAndUpdate({}, updatedData, { new: true });
@@ -89,7 +89,7 @@
 // router.post('/create', upload.single('logoUrl'), async (req, res) => {
 //   try {
 //     const { userId,cname, email, address, tagline, website } = req.body;
-//     const logoUrl = req.file ? `${ProcessingInstruction.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
+//     const logoUrl = req.file ? `${process.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
 
 //     // Check if profile already exists for this userId
 //     const existingProfile = await Profile.findOne({ userId });
@@ -110,7 +110,7 @@
 // router.post('/update/:userId', upload.single('logoUrl'), async (req, res) => {
 //   try {
 //     const { userId,cname,email, address, tagline, website } = req.body;
-//     const logoUrl = req.file ? `${ProcessingInstruction.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
+//     const logoUrl = req.file ? `${process.env.REACT_APP_BASE_URL}/uploads/${req.file.filename}` : null;
 
 //     // Prepare the fields for updating
 //     const updatedData = { cname,email, address, tagline, website };

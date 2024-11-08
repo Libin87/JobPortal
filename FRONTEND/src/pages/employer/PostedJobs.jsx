@@ -166,7 +166,7 @@
 //     }
 
 //     try {
-//       await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/${jobId}`, jobToUpdate);
+//       await axios.put(`${process.env.REACT_APP_BASE_URL}/jobs/${jobId}`, jobToUpdate);
 //       setEditRowId(null);
 //       setValidationErrors((prevErrors) => ({
 //         ...prevErrors,
@@ -182,7 +182,7 @@
 
 //   const handleDelete = async (jobId) => {
 //     try {
-//       await axios.delete(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/${jobId}`);
+//       await axios.delete(`${process.env.REACT_APP_BASE_URL}/jobs/${jobId}`);
 //       setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
 //       toast.success('Job deleted successfully!');
 //     } catch (err) {
@@ -490,7 +490,7 @@ const PostedJobs = () => {
       const userId = sessionStorage.getItem('userId');
 
       try {
-        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/myjobs`, {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/jobs/myjobs`, {
           params: { userId: userId },
         });
         setJobs(response.data);
@@ -607,7 +607,7 @@ const PostedJobs = () => {
     }
 
     try {
-      await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/${jobId}`, jobToUpdate);
+      await axios.put(`${process.env.REACT_APP_BASE_URL}/jobs/${jobId}`, jobToUpdate);
       setEditRowId(null);
       setValidationErrors((prevErrors) => ({
         ...prevErrors,
@@ -623,7 +623,7 @@ const PostedJobs = () => {
 
   const handleDelete = async (jobId) => {
     try {
-      await axios.delete(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/${jobId}`);
+      await axios.delete(`${process.env.REACT_APP_BASE_URL}/jobs/${jobId}`);
       setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
       toast.success('Job deleted successfully!');
     } catch (err) {
@@ -641,7 +641,7 @@ const handleViewPayment = (job) => {
 const amount=500;
 const handlePayment = async (jobId) => {
   try {
-    const orderResponse = await fetch(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/payment/create-order`, {
+    const orderResponse = await fetch(`${process.env.REACT_APP_BASE_URL}/api/payment/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount, jobId }), // Send amount and jobId to backend
@@ -661,7 +661,7 @@ const handlePayment = async (jobId) => {
      
       handler: async function (response) {
   console.log("Received from Razorpay:", response); // Check for razorpay_signature here
-  const verifyResponse = await fetch(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/payment/verify-payment`, {
+  const verifyResponse = await fetch(`${process.env.REACT_APP_BASE_URL}/api/payment/verify-payment`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

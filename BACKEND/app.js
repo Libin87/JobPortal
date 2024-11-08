@@ -31,7 +31,7 @@ const paymentRoutes=require('./routes/paymentRoutes');
 const app = express();
 
 app.use(morgan('dev'));  // Log requests
-app.use(cors({ origin: 'https://jobportal2-0y6l.onrender.com' }));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 const userRoutes = require('./routes/userRoute');
 app.use('/user', userRoutes);

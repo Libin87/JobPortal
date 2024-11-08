@@ -65,7 +65,7 @@ import React from 'react';
 const PaymentComponent = ({ jobId, amount }) => {
   const handlePayment = async () => {
     try {
-      const orderResponse = await fetch(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/payment/create-order`, {
+      const orderResponse = await fetch(`${process.env.REACT_APP_BASE_URL}/api/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, jobId }), // Send amount and jobId to backend
@@ -82,7 +82,7 @@ const PaymentComponent = ({ jobId, amount }) => {
         order_id: orderData.id,
         handler: async function (response) {
           // Send verification data to the backend
-          const verifyResponse = await fetch(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/payment/verify-payment`, {
+          const verifyResponse = await fetch(`${process.env.REACT_APP_BASE_URL}/api/payment/verify-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

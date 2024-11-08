@@ -44,7 +44,7 @@ const PostedJobsAdmin = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/viewjob`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/jobs/viewjob`);
         setJobs(response.data);
       } catch (err) {
         console.error('Error fetching jobs:', err);
@@ -57,7 +57,7 @@ const PostedJobsAdmin = () => {
 
   const handleDelete = async (jobId) => {
     try {
-      await axios.delete(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/${jobId}`);
+      await axios.delete(`${process.env.REACT_APP_BASE_URL}/jobs/${jobId}`);
       setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
       toast.success('Job deleted successfully!');
     } catch (err) {

@@ -85,7 +85,7 @@
 //   const fetchCompanyDetails = async (userId) => {
 //     setLoading(true);
 //     try {
-//       const response = await fetch(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/${userId}`);
+//       const response = await fetch(`${process.env.REACT_APP_BASE_URL}/profile/${userId}`);
 //       if (!response.ok) {
 //         throw new Error('Network response was not ok');
 //       }
@@ -118,7 +118,7 @@
 
   
 //       // Fetch user profile data
-//       const profileResponse = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/profile/${userId}`);
+//       const profileResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/Employeeprofile/profile/${userId}`);
       
 //       // Assuming the profile response contains the needed fields
 //       const {
@@ -219,7 +219,7 @@
 //                 <React.Fragment key={job._id}>
 //                   <ListItem style={styles.listItem}>
 //                     <Avatar
-//                       src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
+//                       src={`${process.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
 //                       alt="Company Logo"
 //                       style={styles.logo}
 //                       onError={(e) => {
@@ -267,7 +267,7 @@
 //                 <React.Fragment key={job._id}>
 //                   <ListItem style={styles.listItem}>
 //                     <Avatar
-//                       src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
+//                       src={`${process.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
 //                       alt="Company Logo"
 //                       style={styles.logo}
 //                       onError={(e) => {
@@ -443,7 +443,7 @@
 //                   {/* First Section: Company Logo and Name */}
 //                   <div style={{ flex: 1, textAlign: 'left', marginRight: '20px' }}>
 //                     <Avatar
-//                       src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${companyDetails.logoUrl}`} // Assuming you have logoUrl in companyDetails
+//                       src={`${process.env.REACT_APP_BASE_URL}/${companyDetails.logoUrl}`} // Assuming you have logoUrl in companyDetails
 //                       alt="Company Logo"
 //                       style={{ width: '100px', height: '100px', marginBottom: '10px' }}
 //                       onError={(e) => {
@@ -620,7 +620,7 @@ const HomePage = () => {
 
     const fetchJobs = async () => {
       try {
-        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/approvedHome`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/jobs/approvedHome`);
         setJobs(response.data);
         console.log('Fetched jobs:', response.data);
       } catch (error) {
@@ -659,7 +659,7 @@ const HomePage = () => {
   const fetchCompanyDetails = async (userId) => {
     setLoading(true);
     try {
-      const response = await fetch(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/${userId}`);
+      const response = await fetch(`${process.env.REACT_APP_BASE_URL}/profile/${userId}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -692,7 +692,7 @@ const HomePage = () => {
 
   
       // Fetch user profile data
-      const profileResponse = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/profile/${userId}`);
+      const profileResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/Employeeprofile/profile/${userId}`);
       
       // Assuming the profile response contains the needed fields
       const {
@@ -732,7 +732,7 @@ const HomePage = () => {
       };
   
       // Send application data to the server
-      const response = await axios.post('${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/apply', applicationData);
+      const response = await axios.post('${process.env.REACT_APP_BASE_URL}/jobs/apply', applicationData);
   
       // Show success toast
       toast.success(response.data.message, {
@@ -793,7 +793,7 @@ const HomePage = () => {
                 <React.Fragment key={job._id}>
                   <ListItem style={styles.listItem}>
                     <Avatar
-                      src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
+                      src={`${process.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
                       alt="Company Logo"
                       style={styles.logo}
                       onError={(e) => {
@@ -847,7 +847,7 @@ const HomePage = () => {
                 <React.Fragment key={job._id}>
                   <ListItem style={styles.listItem}>
                     <Avatar
-                      src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
+                      src={`${process.env.REACT_APP_BASE_URL}/${job.logoUrl}`}
                       alt="Company Logo"
                       style={styles.logo}
                       onError={(e) => {
@@ -1023,7 +1023,7 @@ const HomePage = () => {
                   {/* First Section: Company Logo and Name */}
                   <div style={{ flex: 1, textAlign: 'left', marginRight: '20px' }}>
                     <Avatar
-                      src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${companyDetails.logoUrl}`} // Assuming you have logoUrl in companyDetails
+                      src={`${process.env.REACT_APP_BASE_URL}/${companyDetails.logoUrl}`} // Assuming you have logoUrl in companyDetails
                       alt="Company Logo"
                       style={{ width: '100px', height: '100px', marginBottom: '10px' }}
                       onError={(e) => {

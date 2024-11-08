@@ -37,7 +37,7 @@ const ApprovedJobsAdmin = () => {
       const employerId = sessionStorage.getItem('userId'); // Retrieve the employer ID from session storage
   
       try {
-        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/approved`, { params: { employerId } });
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/jobs/approved`, { params: { employerId } });
         setApprovedJobs(response.data);
       } catch (err) {
         console.error('Error details:', err.response || err.message || err);

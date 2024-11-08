@@ -44,7 +44,7 @@
 //       const fetchCompanyName = async () => {
 //         try {
 //           const userId = sessionStorage.getItem('userId');
-//           const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/company/${userId}`);
+//           const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/profile/company/${userId}`);
 //           sessionStorage.setItem('cname', response.data.companyName);
 //         } catch (err) {
 //           console.error('Error fetching company name:', err);
@@ -140,7 +140,7 @@
 //     const companyName = sessionStorage.getItem('cname');
 //     const jobData = { ...formData, userId, companyName };
 //     try {
-//       const response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/create', jobData);
+//       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/jobs/create', jobData);
 //       console.log(response.data);
 //       setOpenPopup(true);
 //       setFormData({
@@ -534,12 +534,12 @@ const EmployerPage = () => {
           const userId = sessionStorage.getItem('userId');
 
           // Fetch company name
-          const nameResponse = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/company/${userId}`);
+          const nameResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/profile/company/${userId}`);
           sessionStorage.setItem('cname', nameResponse.data.companyName);
           
 
           // Fetch company logo
-          const logoResponse = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/logo/${userId}`);
+          const logoResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/profile/logo/${userId}`);
           const logoUrl = logoResponse.data.logoUrl;
           sessionStorage.setItem('logo', logoResponse.data.logoUrl);
 
@@ -689,7 +689,7 @@ const EmployerPage = () => {
     console.log("cname",companyName)
     const jobData = { ...formData, userId, companyName, logoUrl };
     try {
-      const response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/create`, jobData);
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/jobs/create`, jobData);
       console.log(response.data);
       setOpenPopup(true);
       setFormData({

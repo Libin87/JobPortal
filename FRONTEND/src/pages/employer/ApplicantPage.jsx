@@ -46,7 +46,7 @@
 //   useEffect(() => {
 //         const fetchApplicants = async () => {
 //           try {
-//             const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/applications`, {
+//             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/jobs/applications`, {
 //               params: { employerId },
 //             });
 //             setApplicants(response.data);
@@ -72,7 +72,7 @@
 
 //     try {
 //       console.log("hiii",selectedApplicant._id)
-//       const response = await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
+//       const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
 //         approvalStatus: 'Approved',
 //       });
 //       // Update applicants list to reflect the approved status
@@ -91,7 +91,7 @@
 //     if (!selectedApplicant) return;
 
 //     try {
-//       const response = await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
+//       const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
 //         approvalStatus: 'Rejected',
 //       });
 //       // Update applicants list to reflect the rejected status
@@ -135,7 +135,7 @@
 //                   <StyledTableCell>{applicant.jobTitle}</StyledTableCell>
 //                   <StyledTableCell>
 //               <img
-//                 src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${applicant.photo}`}
+//                 src={`${process.env.REACT_APP_BASE_URL}/${applicant.photo}`}
 //                 alt={`${applicant.name}'s photo`}
 //                 style={{ width: '50px', height: '50px', borderRadius: '50%' }}
 //               />
@@ -144,7 +144,7 @@
 //                   <StyledTableCell>{applicant.email}</StyledTableCell>
                   
 //                   <StyledTableCell>
-//                     <a href={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${applicant.resume}`} target="_blank" rel="noopener noreferrer">
+//                     <a href={`${process.env.REACT_APP_BASE_URL}/${applicant.resume}`} target="_blank" rel="noopener noreferrer">
 //                       View Resume
 //                     </a>
 //                   </StyledTableCell>
@@ -192,7 +192,7 @@
 //             borderRight: '1px solid #e0e0e0',
 //           }}>
 //             <Avatar
-//               src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${selectedApplicant.photo}`}
+//               src={`${process.env.REACT_APP_BASE_URL}/${selectedApplicant.photo}`}
 //               alt="Applicant Photo"
 //               style={{
 //                 width: '100px',
@@ -303,7 +303,7 @@ const ApplicantList = () => {
   useEffect(() => {
     const fetchApplicants = async () => {
       try {
-        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/applications`, {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/jobs/applications`, {
           params: { employerId },
         });
         setApplicants(response.data);
@@ -328,7 +328,7 @@ const ApplicantList = () => {
     if (!selectedApplicant) return;
 
     try {
-      const response = await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
+      const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
         approvalStatus: 'Approved',
       });
       setApplicants((prevApplicants) =>
@@ -348,7 +348,7 @@ const ApplicantList = () => {
     if (!selectedApplicant) return;
 
     try {
-      const response = await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
+      const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/jobs/updateApplications/${selectedApplicant._id}`, {
         approvalStatus: 'Rejected',
       });
       setApplicants((prevApplicants) =>
@@ -395,7 +395,7 @@ const ApplicantList = () => {
                   <StyledTableCell>{applicant.jobTitle}</StyledTableCell>
                   <StyledTableCell>
                     <img
-                      src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${applicant.photo}`}
+                      src={`${process.env.REACT_APP_BASE_URL}/${applicant.photo}`}
                       alt={`${applicant.name}'s photo`}
                       style={{ width: '50px', height: '50px', borderRadius: '50%' }}
                     />
@@ -403,7 +403,7 @@ const ApplicantList = () => {
                   <StyledTableCell>{applicant.name}</StyledTableCell>
                   <StyledTableCell>{applicant.email}</StyledTableCell>
                   <StyledTableCell>
-                    <a href={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${applicant.resume}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${process.env.REACT_APP_BASE_URL}/${applicant.resume}`} target="_blank" rel="noopener noreferrer">
                       View Resume
                     </a>
                   </StyledTableCell>
@@ -452,7 +452,7 @@ const ApplicantList = () => {
                   borderRight: '1px solid #e0e0e0',
                 }}>
                   <Avatar
-                    src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${selectedApplicant.photo}`}
+                    src={`${process.env.REACT_APP_BASE_URL}/${selectedApplicant.photo}`}
                     alt="Applicant Photo"
                     style={{
                       width: '100px',
