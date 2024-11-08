@@ -17,7 +17,7 @@ const ForgotPassword = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:3000/user/forgotpassword', { email })
+    axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/forgotpassword`, { email })
       .then(response => {
         setMessage(response.data.message);
       })

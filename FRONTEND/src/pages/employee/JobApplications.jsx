@@ -52,7 +52,7 @@
 //   useEffect(() => {
 //     const fetchApplications = async () => {
 //       try {
-//         const response = await axios.get(`http://localhost:3000/jobs/applications`, { params: { userId } });
+//         const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/applications`, { params: { userId } });
 //         setApplications(response.data);
 //       } catch (error) {
 //         toast.error("Error fetching applications");
@@ -73,7 +73,7 @@
 
 //   const fetchCompanyDetails = async (employerId) => {
 //     try {
-//       const response = await axios.get(`http://localhost:3000/profile/${employerId}`);
+//       const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/${employerId}`);
 //       setCompanyDetails(response.data);
 //       setCompanyProfileOpen(true);
 //     } catch (error) {
@@ -178,7 +178,7 @@
 //     {/* Left Side: Logo and Company Name */}
 //     <Grid item xs={4} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 //       <Avatar
-//         src={`http://localhost:3000/${companyDetails.logoUrl}`}
+//         src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${companyDetails.logoUrl}`}
 //         alt="Company Logo"
 //         style={{ width: '100px', height: '100px', marginBottom: '10px' }}
 //       />
@@ -258,7 +258,7 @@
 //     useEffect(() => {
 //       const fetchApplications = async () => {
 //         try {
-//           const response = await axios.get(`http://localhost:3000/jobs/applications`, {
+//           const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/applications`, {
 //             params: { userId },
 //           });
 //           setApplications(response.data);
@@ -271,7 +271,7 @@
 
 //     const handleViewDetails = async (jobId) => {
 //       try {
-//         const response = await axios.get(`http://localhost:3000/jobs/viewjob`);
+//         const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/viewjob`);
 //         // Find the job in the response data that matches the selected jobId
 //         const job = response.data.find((job) => job._id === jobId);
 //     console.log(job)
@@ -449,7 +449,7 @@ const JobApplications = () => {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/jobs/applications`, {
+        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/applications`, {
           params: { userId },
         });
         setApplications(response.data);
@@ -462,7 +462,7 @@ const JobApplications = () => {
 
   const handleViewDetails = async (jobId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/jobs/viewjob`);
+      const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs/viewjob`);
       const job = response.data.find((job) => job._id === jobId);
       if (job) {
         setSelectedApplication(job);
@@ -477,7 +477,7 @@ const JobApplications = () => {
 
   const fetchCompanyDetails = async (userId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/profile/${userId}`);
+      const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/${userId}`);
       setCompanyDetails(response.data);
       setCompanyProfileOpen(true);
     } catch (error) {
@@ -603,7 +603,7 @@ const JobApplications = () => {
               <>
                 <div style={{ flex: 1, textAlign: 'left', marginRight: '20px' }}>
                   <Avatar
-                    src={`http://localhost:3000/${companyDetails.logoUrl}`}
+                    src={`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${companyDetails.logoUrl}`}
                     alt="Company Logo"
                     sx={{ width: 100, height: 100, mb: 1 }}
                     onError={(e) => {

@@ -13,7 +13,7 @@ const AdminApplicants = () => {
 
   const fetchApplicants = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/apply/${userToken}`);
+      const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/apply/${userToken}`);
       const applicantsData = response.data;
       setApplicants(applicantsData);
     } catch (error) {
@@ -29,7 +29,7 @@ const AdminApplicants = () => {
 
   const handleApprove = (applicantId) => {
     axios
-      .put(`http://localhost:5000/api/apply/${applicantId}`, { approved: true })
+      .put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/apply/${applicantId}`, { approved: true })
       .then((response) => {
         console.log('Applicant approved successfully:', response.data);
         fetchApplicants();
@@ -41,7 +41,7 @@ const AdminApplicants = () => {
 
   const handleReject = (applicantId) => {
     axios
-      .put(`http://localhost:5000/api/apply/${applicantId}`, { approved: false })
+      .put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/api/apply/${applicantId}`, { approved: false })
       .then((response) => {
         console.log('Applicant rejected successfully:', response.data);
         fetchApplicants();

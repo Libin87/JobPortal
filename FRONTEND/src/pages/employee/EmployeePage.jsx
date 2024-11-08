@@ -36,7 +36,7 @@ const EmployeePage = () => {
 
   const fetchJobs = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/jobs');
+      const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/jobs`);
       setJobs(response.data);
     } catch (error) {
       console.error('Error fetching jobs:', error);

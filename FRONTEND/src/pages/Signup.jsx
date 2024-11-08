@@ -122,7 +122,7 @@ const Signup = () => {
   //     return;
   //   }
 
-  //   axios.post('http://localhost:3000/user/signup', input)
+  //   axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/signup', input)
   //     .then((response) => {
   //       if (response.data.message === 'Registered successfully') {
   //         alert(response.data.message);
@@ -176,7 +176,7 @@ const Signup = () => {
       return;
     }
   
-    axios.post('http://localhost:3000/user/signup', input)
+    axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/signup`, input)
       .then((response) => {
         if (response.data.message === 'Registered successfully') {
           alert(response.data.message);

@@ -44,7 +44,7 @@
 //       setLoading(false); // Stop loading
 //       navigate('/', { replace: true });
 //     } else {
-//       axios.post('http://localhost:3000/user/login', input)
+//       axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/login', input)
       
 //         .then((response) => {
 //           console.log(response.data);
@@ -211,7 +211,7 @@ const LoginForm = () => {
       setLoading(false);
       navigate('/', { replace: true });
     } else {
-      axios.post('http://localhost:3000/user/login', input)
+      axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/login`, input)
         .then((response) => {
           console.log(response.data);
           setLoading(false);
@@ -274,7 +274,7 @@ const LoginForm = () => {
         };
 
         // Send user data to backend and get the saved user info
-        const response = await axios.post('http://localhost:3000/user/google-signin', userData);
+        const response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/google-signin`, userData);
         const savedUser = response.data.user; // Extract user data from the backend response
 
         // Save the user data returned from backend in session storage

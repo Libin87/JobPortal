@@ -44,7 +44,7 @@ const ManageUsers = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/user/users');
+        const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/users`);
         setUsers(response.data);
       } catch (err) {
         console.error('Error fetching users:', err);
@@ -57,7 +57,7 @@ const ManageUsers = () => {
 
   const handleDelete = async (userId) => {
     try {
-      await axios.delete(`http://localhost:3000/user/users/${userId}`);
+      await axios.delete(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/users/${userId}`);
       setUsers((prevUsers) => prevUsers.filter((user) => user._id !== userId));
       toast.success('User deleted successfully!');
     } catch (err) {

@@ -22,7 +22,7 @@
 //   const userId = sessionStorage.getItem('userId');
 
 //   useEffect(() => {
-//     axios.get(`http://localhost:3000/profile/${userId}`)
+//     axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/${userId}`)
 //       .then((response) => {
 //         if (response.data) {
 //           setProfileData({
@@ -32,7 +32,7 @@
 //             tagline: response.data.tagline,
 //             website: response.data.website,
 //           });
-//           setLogoPreview(`http://localhost:3000/${response.data.logoUrl}`); // Update to correct URL format
+//           setLogoPreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${response.data.logoUrl}`); // Update to correct URL format
 //           setIsUpdating(true);
 //         }
 //       })
@@ -75,7 +75,7 @@
 //     if (logo) formData.append('logoUrl', logo);
   
 //     const url = isUpdating
-//       ? `http://localhost:3000/profile/update/${userId}`
+//       ? `${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/update/${userId}`
 //       : 'http://localhost:3000/profile/create';
   
 //     axios.post(url, formData)
@@ -88,7 +88,7 @@
 //           sessionStorage.setItem('cname', profileData.cname);
   
 //           // Update logo preview and alert success
-//           setLogoPreview(`http://localhost:3000/${profileData.logoUrl}`);
+//           setLogoPreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.logoUrl}`);
 //           window.alert(`${isUpdating ? 'Updated' : 'Created'} profile successfully`);
   
 //           if (!isUpdating) {
@@ -277,7 +277,7 @@ const CompanyProfile = () => {
   const userId = sessionStorage.getItem('userId');
 console.log("id",userId)
   useEffect(() => {
-    axios.get(`http://localhost:3000/profile/${userId}`)
+    axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/${userId}`)
       .then((response) => {
         if (response.data) {
           setProfileData({
@@ -287,7 +287,7 @@ console.log("id",userId)
             tagline: response.data.tagline,
             website: response.data.website,
           });
-          setLogoPreview(`http://localhost:3000/${response.data.logoUrl}`);
+          setLogoPreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${response.data.logoUrl}`);
           setIsUpdating(true);
         }
       })
@@ -345,8 +345,8 @@ console.log("id",userId)
     formData.append('userId', userId);
   
     const url = isUpdating
-      ? `http://localhost:3000/profile/update/${userId}`
-      : 'http://localhost:3000/profile/create';
+      ? `${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/update/${userId}`
+      : '${ProcessingInstruction.env.REACT_APP_BASE_URL}/profile/create';
   
     axios.post(url, formData)
       .then((response) => {
@@ -354,7 +354,7 @@ console.log("id",userId)
         
         if (profileData) {
           sessionStorage.setItem('cname', profileData.cname);
-          setLogoPreview(`http://localhost:3000/${profileData.logoUrl}`);
+          setLogoPreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.logoUrl}`);
           window.alert(`${isUpdating ? 'Updated' : 'Created'} profile successfully`);
   
           if (!isUpdating) {

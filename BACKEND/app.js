@@ -31,7 +31,7 @@ const paymentRoutes=require('./routes/paymentRoutes');
 const app = express();
 
 app.use(morgan('dev'));  // Log requests
-app.use(cors()); 
+app.use(cors({ origin: 'https://jobportal2-0y6l.onrender.com' }));
 app.use(express.json());
 const userRoutes = require('./routes/userRoute');
 app.use('/user', userRoutes);
@@ -42,7 +42,6 @@ app.use('/jobs', jobRoutes);
 app.use('/api/', siteReportRoute);
 app.use('/Employeeprofile', profileRoute);
 app.use('/api/payment', paymentRoutes);
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on PORT ${PORT}`);

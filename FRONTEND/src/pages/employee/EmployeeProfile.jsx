@@ -97,7 +97,7 @@
 
 //   const fetchProfile = async (userId) => {
 //     try {
-//       const response = await axios.get(`http://localhost:3000/Employeeprofile/profile/${userId}`);
+//       const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/profile/${userId}`);
 //       const profileData = response.data;
 //       console.log(profileData)
 
@@ -117,8 +117,8 @@
 //           jobPreferences: Array.isArray(profileData.jobPreferences) ? profileData.jobPreferences : [], // Set job preferences
 //           dob: profileData.dob ? profileData.dob.slice(0, 10) : '', // Set dob // Add dob
 //         }));
-//         setPhotoPreview(`http://localhost:3000/${profileData.photo}`);
-//         setResumePreview(`http://localhost:3000/${profileData.resume}`);
+//         setPhotoPreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.photo}`);
+//         setResumePreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.resume}`);
 //         setIsProfileExists(true);  // Profile exists
 //       } else {
 //         setIsProfileExists(false); // Profile doesn't exist, prepare to create a new one
@@ -257,7 +257,7 @@
   
 //         if (isProfileExists) {
 //           // Update profile
-//           response = await axios.put(`http://localhost:3000/Employeeprofile/update/${userId}`, data, {
+//           response = await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/update/${userId}`, data, {
 //             headers: {
 //               'Content-Type': 'multipart/form-data', // Indicate that we are sending FormData
 //             },
@@ -265,7 +265,7 @@
 //           toast.success('Profile updated successfully!', { position: 'top-right', autoClose: 3000 });
 //         } else {
 //           // Create new profile
-//           response = await axios.post('http://localhost:3000/Employeeprofile/create', data, {
+//           response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/create', data, {
 //             headers: {
 //               'Content-Type': 'multipart/form-data',
 //             },
@@ -644,7 +644,7 @@
 
   // const fetchProfile = async (userId, fallback) => {
   //     try {
-  //         const response = await axios.get(`http://localhost:3000/Employeeprofile/profile/${userId}`);
+  //         const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/profile/${userId}`);
   //         const profileData = response.data;
   //         console.log(profileData);
 
@@ -662,8 +662,8 @@
   //                 jobPreferences: Array.isArray(profileData.jobPreferences) ? profileData.jobPreferences : [],
   //                 dob: profileData.dob ? profileData.dob.slice(0, 10) : '',
   //             }));
-  //             setPhotoPreview(`http://localhost:3000/${profileData.photo}`);
-  //             setResumePreview(`http://localhost:3000/${profileData.resume}`);
+  //             setPhotoPreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.photo}`);
+  //             setResumePreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.resume}`);
   //             setIsProfileExists(true);
   //         } else {
   //             // Profile does not exist, use session data as a fallback
@@ -844,7 +844,7 @@
 
   //           if (isProfileExists) {
   //               // Update profile
-  //               response = await axios.put(`http://localhost:3000/Employeeprofile/update/${userId}`, data, {
+  //               response = await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/update/${userId}`, data, {
   //                   headers: {
   //                       'Content-Type': 'multipart/form-data', // Indicate that we are sending FormData
   //                   },
@@ -852,7 +852,7 @@
   //               toast.success('Profile updated successfully!', { position: 'top-right', autoClose: 3000 });
 
   //               // Update the signup database
-  //               await axios.put(`http://localhost:3000/user/update/${userId}`, {
+  //               await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/update/${userId}`, {
   //                   name: formData.name,
   //                   phone: formData.phone,
   //               }, {
@@ -862,7 +862,7 @@
   //               });
   //           } else {
   //               // Create new profile
-  //               response = await axios.post('http://localhost:3000/Employeeprofile/create', data, {
+  //               response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/create', data, {
   //                   headers: {
   //                       'Content-Type': 'multipart/form-data',
   //                   },
@@ -871,7 +871,7 @@
   //               setIsProfileExists(true); // Set to true after successful creation
 
   //               // Update the signup database
-  //               await axios.put(`http://localhost:3000/user/update/${userId}`, {
+  //               await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/update/${userId}`, {
   //                   name: formData.name,
   //                   phone: formData.phone,
   //               }, {
@@ -1274,7 +1274,7 @@
 
   const fetchProfile = async (userId, fallback) => {
       try {
-          const response = await axios.get(`http://localhost:3000/Employeeprofile/profile/${userId}`);
+          const response = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/profile/${userId}`);
           const profileData = response.data;
           console.log(profileData);
 
@@ -1292,8 +1292,8 @@
                   jobPreferences: Array.isArray(profileData.jobPreferences) ? profileData.jobPreferences : [],
                   dob: profileData.dob ? profileData.dob.slice(0, 10) : '',
               }));
-              setPhotoPreview(`http://localhost:3000/${profileData.photo}`);
-              setResumePreview(`http://localhost:3000/${profileData.resume}`);
+              setPhotoPreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.photo}`);
+              setResumePreview(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/${profileData.resume}`);
               setIsProfileExists(true);
           } else {
               // Profile does not exist, use session data as a fallback
@@ -1460,7 +1460,7 @@
   
         try {
             // Step 1: Check if phone number already exists
-            const phoneCheckResponse = await axios.get('http://localhost:3000/user/checkPhoneNumber', {
+            const phoneCheckResponse = await axios.get(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/checkPhoneNumber`, {
                 params: { phone: formData.phone },
             });
   
@@ -1478,7 +1478,7 @@
             // Step 2: Update or create profile
             if (isProfileExists) {
                 // Update profile
-                response = await axios.put(`http://localhost:3000/Employeeprofile/update/${userId}`, data, {
+                response = await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/update/${userId}`, data, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
@@ -1486,7 +1486,7 @@
                 toast.success('Profile updated successfully!', { position: 'top-right', autoClose: 3000 });
   
                 // Update the signup database
-                await axios.put(`http://localhost:3000/user/update/${userId}`, {
+                await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/update/${userId}`, {
                     name: formData.name,
                     phone: formData.phone,
                 }, {
@@ -1496,7 +1496,7 @@
                 });
             } else {
                 // Create new profile
-                response = await axios.post('http://localhost:3000/Employeeprofile/create', data, {
+                response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/Employeeprofile/create`, data, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
@@ -1505,7 +1505,7 @@
                 setIsProfileExists(true); // Set to true after successful creation
   
                 // Update the signup database
-                await axios.put(`http://localhost:3000/user/update/${userId}`, {
+                await axios.put(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/update/${userId}`, {
                     name: formData.name,
                     phone: formData.phone,
                 }, {

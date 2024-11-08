@@ -24,7 +24,7 @@
 //     }
 
 //     try {
-//       const response = await axios.post(`http://localhost:3000/user/resetpassword/${token}`, { newPassword });
+//       const response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/resetpassword/${token}`, { newPassword });
 //       setMessage(response.data.message);
 
 //       setTimeout(() => {
@@ -202,7 +202,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await axios.post(`http://localhost:3000/user/resetpassword/${token}`, { newPassword });
+      const response = await axios.post(`${ProcessingInstruction.env.REACT_APP_BASE_URL}/user/resetpassword/${token}`, { newPassword });
       setMessage(response.data.message);
 
       setTimeout(() => {
