@@ -1,4 +1,3 @@
-
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const userData = require('../model/userData');
@@ -9,69 +8,91 @@ exports.forgotPassword = async (req, res) => {
         const user = await userData.findOne({ email });
 
         if (!user) {
-            return res.json({ message: 'No account with that email address exists.' });
+            return res.status(404).json({ message: 'No account with that email address exists.' });
         }
 
+        // Generate reset token
         const token = crypto.randomBytes(20).toString('hex');
         user.resetPasswordToken = token;
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-
         await user.save();
 
+        // Create email transporter
         const transporter = nodemailer.createTransport({
-            service: 'Gmail',
+            service: 'gmail',
             auth: {
                 user: process.env.EMAIL,
-                pass: process.env.EMAIL_PASSWORD,
-            },
+                pass: process.env.EMAIL_APP_PASSWORD // Use App Password here
+            }
+        });
+        console.log(process.env.EMAIL_APP_PASSWORD);
+        console.log(process.env.EMAIL);
+        // Email content
+        const mailOptions = {
+            from: `"Job Portal" <${process.env.EMAIL}>`,
+            to: email,
+            subject: 'Password Reset Request',
+            html: `
+                <h2>Password Reset Request</h2>
+                <p>You are receiving this because you (or someone else) have requested the reset of the password for your account.</p>
+                <p>Please click the link below to reset your password:</p>
+                <a href="http://localhost:3001/resetpassword/${token}">Reset Password</a>
+                <p>This link will expire in 1 hour.</p>
+                <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+            `
+        };
+
+        // Send email
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ 
+            success: true, 
+            message: 'Password reset email sent successfully' 
         });
 
-        const mailOptions = {
-            to: user.email,
-            from: process.env.EMAIL,
-            subject: 'Password Reset',
-            text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
-            Please click on the following link, or paste this into your browser to complete the process:\n\n
-            http://localhost:3001/user/resetpassword/${token}\n\n    
-            If you did not request this, please ignore this email and your password will remain unchanged.\n`,
-        };
-        // ${req.headers.host}
-        transporter.sendMail(mailOptions, (err) => {
-            if (err) {
-                console.error('There was an error: ', err);
-                return res.json({ message: 'Error sending the email' });
-            }
-            res.json({ message: 'An e-mail has been sent to ' + user.email + ' with further instructions.' });
-        });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Reset password error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error sending reset email', 
+            error: error.message 
+        });
     }
 };
+
 exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
-        const { newPassword } = req.body; // Extract newPassword from the request body
+        const { newPassword } = req.body;
 
-        // Find user by reset token and ensure the token is still valid (not expired)
         const user = await userData.findOne({
             resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() },
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
         if (!user) {
-            return res.json({ message: 'Password reset token is invalid or has expired.' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Password reset token is invalid or has expired' 
+            });
         }
 
-        // Update the user's password and clear the reset token fields
-        user.password = newPassword; // Ideally, hash the password before saving
+        // Update password
+        user.password = newPassword;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
-
         await user.save();
-        res.json({ message: 'Password has been successfully reset!' });
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'Password has been reset successfully' 
+        });
+
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error resetting password:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error resetting password', 
+            error: error.message 
+        });
     }
 };

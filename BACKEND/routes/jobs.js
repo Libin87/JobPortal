@@ -6,46 +6,14 @@ const Application = require('../model/applicationModel');
 
 // POST route to create a new job post
 router.post('/create', async (req, res) => {
-  const {
-    jobTitle,
-    companyName,
-    location,
-    salary,
-    jobType,
-    qualifications,
-    skills,
-    jobDescription,
-    experience,
-    contactDetails,
-    lastDate,
-    vaccancy,
-    userId,
-    logoUrl
-  } = req.body;
-
   try {
     const newJob = new Job({
-      jobTitle,
-      companyName,
-      location,
-      salary,
-      jobType,
-      qualifications,
-      skills,
-      jobDescription,
-      experience,
-      contactDetails,
-      lastDate,
-      userId,
-      vaccancy,
-      logoUrl,
+      ...req.body,
       approvalStatus: 'Pending',
-      paymentStatus:'Pending'
-      // response:'Pending'
+      paymentStatus: 'Pending',
+      status: 'active' // Add default status when creating job
     });
-    
 
-    // Save the new job to the database
     const savedJob = await newJob.save();
     res.status(201).json({ message: 'Job posted successfully!', job: savedJob });
   } catch (error) {
@@ -55,7 +23,8 @@ router.post('/create', async (req, res) => {
 });
 
 router.get('/myjobs', async (req, res) => {
-  const userId = req.query.userId; // Assuming you send the userId in query
+  const userId = req.query.userId;
+  //const userId = req.params.userId; // Assuming you send the userId in query
 
   try {
     // Find jobs posted by this employer
@@ -156,14 +125,28 @@ router.put('/approve/:id', async (req, res) => {
 
 router.get('/approved', async (req, res) => {
   const { employerId } = req.query;
-  console.log("Employer ID from query:", employerId); // Additional logging
-
   try {
-    const jobs = await Job.find({ approvalStatus: 'approved', userId: employerId });
+    // Update expired jobs first
+    const currentDate = new Date();
+    await Job.updateMany(
+      { 
+        lastDate: { $lt: currentDate }, 
+        status: 'active'
+      },
+      { 
+        $set: { status: 'Expired' } 
+      }
+    );
+
+    // Then fetch the employer's jobs
+    const jobs = await Job.find({ 
+      approvalStatus: 'approved', 
+      userId: employerId 
+    });
     res.json(jobs);
   } catch (error) {
-    console.error("Database query error:", error); // More detailed error logging
-    res.status(500).json({ message: 'Failed to fetch approved jobs for the employer', error });
+    console.error("Database query error:", error);
+    res.status(500).json({ message: 'Failed to fetch jobs', error });
   }
 });
 
@@ -179,15 +162,28 @@ router.get('/approved', async (req, res) => {
 // });
 router.get('/approvedHome', async (req, res) => {
   try {
-    // Fetch all jobs with 'approved' approval status and 'completed' payment status
+    // First update any expired jobs
+    const currentDate = new Date();
+    await Job.updateMany(
+      { 
+        lastDate: { $lt: currentDate }, 
+        status: 'active'
+      },
+      { 
+        $set: { status: 'Expired' } 
+      }
+    );
+
+    // Then fetch active jobs
     const jobs = await Job.find({
       approvalStatus: 'approved',
-      paymentStatus: 'Completed'
+      paymentStatus: 'Completed',
+      status: 'active'
     });
     res.json(jobs);
   } catch (error) {
-    console.error("Database query error:", error); // More detailed error logging
-    res.status(500).json({ message: 'Failed to fetch approved jobs with completed payments', error });
+    console.error("Database query error:", error);
+    res.status(500).json({ message: 'Failed to fetch jobs', error });
   }
 });
 
@@ -241,7 +237,8 @@ router.post('/apply', async (req, res) => {
       dob,
       phone,
       companyName,
-      approvalStatus: 'Pending'
+      approvalStatus: 'Pending',
+      testStatus: 'Pending'
     });
 
     // Save the application
@@ -254,21 +251,45 @@ router.post('/apply', async (req, res) => {
 });
 
 
+// router.get('/applications', async (req, res) => {
+//   const { userId, jobId, employerId, testStatus } = req.query;
+
+//   try {
+//     const filter = {};
+//     if (userId) filter.userId = userId;
+//     if (jobId) filter.jobId = jobId;
+//     if (employerId) filter.employerId = employerId; // Correctly filter by employerId
+//     if (testStatus) filter.testStatus = testStatus;
+//     // Fetch applications based on the filter
+//     const applications = await Application.find(filter);
+//     res.status(200).json(applications);
+//   } catch (error) {
+//     res.status(500).json({ error: 'Failed to retrieve applications' });
+//   }
+// });
+
 router.get('/applications', async (req, res) => {
-  const { userId, jobId, employerId } = req.query;
-
   try {
-    // Define a filter object
-    const filter = {};
-    if (userId) filter.userId = userId;
-    if (jobId) filter.jobId = jobId;
-    if (employerId) filter.employerId = employerId; // Correctly filter by employerId
+    const { userId, testStatus } = req.query;
+    
+    // Build query object
+    const query = { userId: userId };
+    if (testStatus) {
+      query.testStatus = testStatus;
+    }
 
-    // Fetch applications based on the filter
-    const applications = await Application.find(filter);
-    res.status(200).json(applications);
+    console.log('Fetching applications with query:', query); // Debug log
+
+    const applications = await Application.find(query)
+      .populate('jobId')
+      .sort({ createdAt: -1 });
+
+    console.log('Found applications:', applications.length); // Debug log
+    
+    res.json(applications);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to retrieve applications' });
+    console.error('Error fetching applications:', error);
+    res.status(500).json({ message: 'Error fetching applications', error: error.message });
   }
 });
 
@@ -285,7 +306,7 @@ router.delete('/deletApplication/:applicationId', async (req, res) => {
       return res.status(404).json({ error: 'Application not found' });
     }
 
-    res.status(200).json({ message: 'Application deleted successfully' });
+    res.status(200).json({ message: 'Application canceled successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete application' });
   }
@@ -316,6 +337,174 @@ router.put('/updateApplications/:applicationId', async (req, res) => {
 });
 
 
+router.get('/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    const searchRegex = new RegExp(query, 'i');
+
+    // Update expired jobs first
+    const currentDate = new Date();
+    await Job.updateMany(
+      { 
+        lastDate: { $lt: currentDate }, 
+        status: 'active'
+      },
+      { 
+        $set: { status: 'Expired' } 
+      }
+    );
+
+    const jobs = await Job.find({
+      $and: [
+        { 
+          paymentStatus: 'Completed', 
+          approvalStatus: 'approved',
+          status: 'active'
+        },
+        {
+          $or: [
+            { jobTitle: searchRegex },
+            { companyName: searchRegex },
+            { location: searchRegex },
+            { skills: searchRegex }
+          ]
+        }
+      ]
+    });
+
+    res.json(jobs);
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ message: 'Failed to search jobs', error });
+  }
+});
+
+// Add this new route for filtering
+router.get('/filter', async (req, res) => {
+  try {
+    const { jobType, location, experience, salary } = req.query;
+    
+    // Update expired jobs first
+    const currentDate = new Date();
+    await Job.updateMany(
+      { 
+        lastDate: { $lt: currentDate }, 
+        status: 'active'
+      },
+      { 
+        $set: { status: 'Expired' } 
+      }
+    );
+
+    let query = {
+      approvalStatus: 'approved',
+      paymentStatus: 'Completed',
+      status: 'active'
+    };
+
+    if (jobType) query.jobType = jobType;
+    if (location) query.location = { $regex: location, $options: 'i' };
+    
+    if (experience) {
+      if (experience === '0') {
+        query.experience = { $lte: 1 };
+      } else if (experience === '1-2') {
+        query.experience = { $gt: 0, $lte: 2 };
+      } else if (experience === '3-5') {
+        query.experience = { $gt: 2, $lte: 5 };
+      } else if (experience === '5+') {
+        query.experience = { $gt: 5 };
+      }
+    }
+
+    if (salary) {
+      const [min, max] = salary.split('-').map(Number);
+      if (max) {
+        query.salary = { $gte: min, $lte: max };
+      } else {
+        query.salary = { $gte: min };
+      }
+    }
+
+    const jobs = await Job.find(query);
+    res.json(jobs);
+  } catch (error) {
+    console.error('Filter error:', error);
+    res.status(500).json({ message: 'Error filtering jobs' });
+  }
+});
+
+// Add this route to get unique locations
+router.get('/locations', async (req, res) => {
+  try {
+    const locations = await Job.distinct('location', {
+      approvalStatus: 'approved',
+      paymentStatus: 'Completed'
+    });
+    res.json(locations);
+  } catch (error) {
+    console.error('Error fetching locations:', error);
+    res.status(500).json({ message: 'Error fetching locations' });
+  }
+});
+
+// Add this route to get unique job types
+router.get('/jobtypes', async (req, res) => {
+  try {
+    const jobTypes = await Job.distinct('jobType', {
+      approvalStatus: 'approved',
+      paymentStatus: 'Completed'
+    });
+    res.json(jobTypes);
+  } catch (error) {
+    console.error('Error fetching job types:', error);
+    res.status(500).json({ message: 'Error fetching job types' });
+  }
+});
+router.put('/checkExpired', async (req, res) => {
+  try {
+    const currentDate = new Date();
+    console.log('Checking for expired jobs at:', currentDate);
+
+    const result = await Job.updateMany(
+      { 
+        lastDate: { $lt: currentDate }, 
+        status: 'active'
+      },
+      { 
+        $set: { status: 'Expired' } 
+      }
+    );
+
+    console.log('Update result:', result);
+    res.status(200).json({
+      message: 'Job statuses updated successfully',
+      updatedJobs: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error('Error updating expired jobs:', error);
+    res.status(500).json({ message: 'Error updating job statuses', error });
+  }
+});
+
+
+router.get('/myjobs1', async (req, res) => {
+  const userId = req.query.userId;
+
+  try {
+    // Find jobs posted by this employer that meet the given conditions
+    const jobs = await Job.find({
+      userId: userId,
+      approvalStatus: 'approved',
+      paymentStatus: 'Completed',
+      status: 'active',
+    });
+    res.json(jobs);
+  } catch (err) {
+    console.error('Error fetching jobs:', err); // Debugging log
+    res.status(500).json({ error: 'Failed to fetch jobs' });
+  }
+});
 
 
 module.exports = router;

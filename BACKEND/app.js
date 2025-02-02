@@ -1,23 +1,4 @@
 
-// // const express=require('express')
-// // const mongoose=require('mongoose')
-// // const morgan =require('morgan')
-// // const cors=require('cors');
-// // require("./db/connection")
-// // const app=express();
-// // require('dotenv').config();
-// // app.use(morgan('dev'));
-// // app.use(cors());
-
-
-// // const api1=require('./routes/userRoute');
-// // app.use('/user',api1)
-
-// // const PORT=process.env.PORT;
-// // app.listen(PORT,()=>{
-// //     console.log(`Server running on PORT ${PORT}`)
-// // })
-
 const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
@@ -42,6 +23,8 @@ app.use('/jobs', jobRoutes);
 app.use('/api/', siteReportRoute);
 app.use('/Employeeprofile', profileRoute);
 app.use('/api/payment', paymentRoutes);
+app.use('/test', require('./routes/testRoute'));
+app.use('/questionBank', require('./routes/questionBankRoute'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

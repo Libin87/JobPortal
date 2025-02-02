@@ -1,27 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
   Container,
   Grid,
   Button,
   TextField,
   Typography,
-  Card,
-  CardContent,
-  CardActions,
   Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
   DialogTitle,
+  DialogContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
+import { red } from '@mui/material/colors';
 import { Link, useNavigate } from 'react-router-dom';
 import NavbarEmployee from './NavbarEmployee';
 import Footer from '../../components/Footer';
+import axios from 'axios';
 
 const EmployeePage = () => {
-  const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tests, setTests] = useState([]);
+  const [hasPendingTests, setHasPendingTests] = useState(false);
   const [openPopup, setOpenPopup] = useState(false);
   const navigate = useNavigate();
 
@@ -29,36 +33,68 @@ const EmployeePage = () => {
     const role = sessionStorage.getItem('role');
     if (!role || role !== 'employee') {
       navigate('/login');
-    } else {
-      fetchJobs();
     }
-  }, [navigate]);
 
-  const fetchJobs = async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/jobs');
-      setJobs(response.data);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-    }
-  };
+    const fetchPendingTests = async () => {
+      try {
+        const employeeId = sessionStorage.getItem('userId');
+        
+        // First, check for applications with pending test status
+        const applicationsResponse = await axios.get(
+          `http://localhost:3000/jobs/applications`,
+          {
+            params: {
+              userId: employeeId,
+              testStatus: 'Pending'
+            }
+          }
+        );
+
+        console.log('Applications response:', applicationsResponse.data);
+
+        if (applicationsResponse.data && applicationsResponse.data.length > 0) {
+          setHasPendingTests(true);
+          
+          // If there are pending applications, fetch the associated tests
+          const testsResponse = await axios.get(
+            `http://localhost:3000/test/employee-tests/${employeeId}`
+          );
+          
+          console.log('Tests response:', testsResponse.data);
+          
+          if (testsResponse.data.hasTests) {
+            setTests(testsResponse.data.tests);
+          } else {
+            setTests([]);
+          }
+        } else {
+          setHasPendingTests(false);
+          setTests([]);
+        }
+      } catch (error) {
+        console.error('Error fetching pending tests:', error);
+        setHasPendingTests(false);
+        setTests([]);
+      }
+    };
+
+    fetchPendingTests();
+  }, [navigate]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredJobs = jobs.filter(
-    (job) =>
-      job.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleApply = () => {
+  const handleNotificationClick = () => {
     setOpenPopup(true);
   };
 
   const handleClosePopup = () => {
     setOpenPopup(false);
+  };
+
+  const handleTakeTest = (testId) => {
+    navigate(`/take-test/${testId}`);
   };
 
   return (
@@ -83,28 +119,48 @@ const EmployeePage = () => {
 
         <Grid container spacing={3} justifyContent="center" style={{ marginTop: '20px' }}>
           <Grid item xs={12} sm={4} md={3}>
-            <Link to="/employeeProfile">
+            <Link to="/employeeProfile" style={{ textDecoration: 'none' }}>
               <Button variant="contained" fullWidth style={{ backgroundColor: '#0D6EFD' }}>
                 Profile
               </Button>
             </Link>
           </Grid>
           <Grid item xs={12} sm={4} md={3}>
-            <Link to="/jobApplications">
+            <Link to="/jobApplications" style={{ textDecoration: 'none' }}>
               <Button variant="contained" color="secondary" fullWidth>
                 Job Applications
               </Button>
             </Link>
           </Grid>
           <Grid item xs={12} sm={4} md={3}>
-            <Link to="/notifications">
-              <Button variant="contained" fullWidth style={{ backgroundColor: 'green' }}>
-                Notifications
-              </Button>
-            </Link>
+            <Button
+              variant="contained"
+              fullWidth
+              style={{ 
+                backgroundColor: 'green', 
+                position: 'relative',
+              }}
+              onClick={handleNotificationClick}
+            >
+              Notifications
+              {hasPendingTests && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '5px',
+                    right: '5px',
+                    width: '12px',
+                    height: '12px',
+                    backgroundColor: red[500],
+                    borderRadius: '50%',
+                    display: 'block'
+                  }}
+                />
+              )}
+            </Button>
           </Grid>
           <Grid item xs={12} sm={4} md={3}>
-            <Link to="/savedJobs">
+            <Link to="/savedJobs" style={{ textDecoration: 'none' }}>
               <Button variant="contained" fullWidth style={{ backgroundColor: '#00CCCD' }}>
                 Saved Jobs
               </Button>
@@ -122,45 +178,55 @@ const EmployeePage = () => {
           fullWidth
           style={{ marginBottom: '30px' }}
         />
-        <Grid container spacing={3}>
-          {filteredJobs.map((job) => (
-            <Grid item xs={12} sm={6} md={4} key={job._id}>
-              <Card style={{ height: '100%' }}>
-                <CardContent>
-                  <Typography variant="h6" component="div">
-                    {job.jobTitle}
-                  </Typography>
-                  <Typography color="textSecondary">{job.location}</Typography>
-                  <Typography color="textSecondary">Salary: ${job.salary}</Typography>
-                  <Typography color="textSecondary">Experience: {job.experience} years</Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {job.jobDescription}
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Button size="small" color="primary" onClick={handleApply}>
-                    Apply
-                  </Button>
-                  <Button size="small" color="secondary">
-                    Save
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
       </Container>
 
-      <Dialog open={openPopup} onClose={handleClosePopup}>
-        <DialogTitle>Application Submitted</DialogTitle>
+      {/* Dialog for Tests */}
+      <Dialog open={openPopup} onClose={handleClosePopup} maxWidth="md" fullWidth>
+        <DialogTitle style={{ textAlign: 'center', fontWeight: 'bold' }}>
+          Pending Selection Tests
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>Your application has been submitted successfully!</DialogContentText>
+          {tests.length > 0 ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Test Name</TableCell>
+                    <TableCell>Job Title</TableCell>
+                    <TableCell>Company Name</TableCell>
+                    <TableCell>Duration (mins)</TableCell>
+                    <TableCell>Total Marks</TableCell>
+                    <TableCell>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tests.map((test) => (
+                    <TableRow key={test._id}>
+                      <TableCell>{test.testName}</TableCell>
+                      <TableCell>{test.jobTitle}</TableCell>
+                      <TableCell>{test.companyName}</TableCell>
+                      <TableCell>{test.duration}</TableCell>
+                      <TableCell>{test.totalMarks}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleTakeTest(test._id)}
+                        >
+                          Take Test
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography align="center" style={{ padding: '20px' }}>
+              No pending tests available at the moment.
+            </Typography>
+          )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClosePopup} color="primary">
-            Close
-          </Button>
-        </DialogActions>
       </Dialog>
 
       <Footer />
