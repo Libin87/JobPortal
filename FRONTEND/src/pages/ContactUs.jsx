@@ -1,105 +1,35 @@
-// import React from 'react';
-// import 'bootstrap/dist/css/bootstrap.min.css';
-// import Navbar from '../components/Navbar';
-// import Footer from '../components/Footer';
-
-// const ContactUs=() => {
-//   return (
-//     <div style={styles.wrapper}>
-//       <Navbar/>
-//       <div style={styles.contactSection}>
-//         <div className="container">
-//           <h2 style={styles.heading}>Contact Us</h2>
-//           <p style={styles.subHeading}>We would love to hear from you! Please fill out the form below and we will get in touch with you shortly.</p>
-//           <div className="row">
-//             <div className="col-md-6">
-//               <form>
-//                 <div className="mb-3">
-//                   <label htmlFor="name" className="form-label">Name</label>
-//                   <input type="text" className="form-control" id="name" placeholder="Enter your name"/>
-//                 </div>
-//                 <div className="mb-3">
-//                   <label htmlFor="email" className="form-label">Email</label>
-//                   <input type="email" className="form-control" id="email" placeholder="Enter your email"/>
-//                 </div>
-//                 <div className="mb-3">
-//                   <label htmlFor="message" className="form-label">Message</label>
-//                   <textarea className="form-control" id="message" rows="4" placeholder="Your message"></textarea>
-//                 </div>
-//                 <button type="submit" className="btn btn-primary">Submit</button>
-//               </form>
-//             </div>
-//             <div className="col-md-6">
-//               <h4 style={styles.contactInfoHeading}>Our Office</h4>
-//               <p>123 JobPortal Street, JobCity, JP 45678</p>
-//               <h4 style={styles.contactInfoHeading}>Phone</h4>
-//               <p>+123 456 7890</p>
-//               <h4 style={styles.contactInfoHeading}>Email</h4>
-//               <p>support@jobportal.com</p>
-//               <div style={styles.socialIcons}>
-//                 <a href="#" style={styles.icon}><i className="fab fa-facebook-f"></i></a>
-//                 <a href="#" style={styles.icon}><i className="fab fa-twitter"></i></a>
-//                 <a href="#" style={styles.icon}><i className="fab fa-linkedin-in"></i></a>
-//                 <a href="#" style={styles.icon}><i className="fab fa-instagram"></i></a>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//       <Footer/>
-//     </div>
-//   );
-// };
-
-// const styles={
-//   wrapper: {
-//     fontFamily: 'Arial, sans-serif',
-//   },
-//   contactSection: {
-//     padding: '60px 0',
-//     backgroundColor: '#f8f9fa',
-//   },
-//   heading: {
-//     fontSize: '2.5rem',
-//     marginBottom: '20px',
-//     textAlign: 'center',
-//   },
-//   subHeading: {
-//     fontSize: '1.2rem',
-//     marginBottom: '40px',
-//     textAlign: 'center',
-//   },
-//   contactInfoHeading: {
-//     fontSize: '1.5rem',
-//     marginTop: '20px',
-//   },
-//   socialIcons: {
-//     marginTop: '30px',
-//   },
-//   icon: {
-//     color: '#007bff',
-//     fontSize: '1.5rem',
-//     marginRight: '15px',
-//     transition: 'color 0.3s ease',
-//   },
-// };
-
-// export default ContactUs;
-
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import {
+  Container,
+  Typography,
+  Grid,
+  TextField,
+  Button,
+  Box,
+  Alert,
+  Snackbar,
+  Paper
+} from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import NavbarAdmin from '../pages/admin/NavbarAdmin';
-import NavbarEmployee from '../pages/employee/NavbarEmployee';
-import NavbarEmployer from '../pages/employer/NavbarEmployer';
+import NavbarAdmin from './admin/NavbarAdmin';
+import NavbarEmployee from './employee/NavbarEmployee';
+import NavbarEmployer from './employer/NavbarEmployer';
 import Footer from '../components/Footer';
 
 const ContactUs = () => {
-  const [userRole, setUserRole] = useState(null);
-
-  useEffect(() => {
-    const role = sessionStorage.getItem('role');
-    setUserRole(role);
-  }, []);
+  const [userRole, setUserRole] = useState(sessionStorage.getItem('role'));
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [alert, setAlert] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  const [errors, setErrors] = useState({});
 
   const renderNavbar = () => {
     switch (userRole) {
@@ -114,84 +44,175 @@ const ContactUs = () => {
     }
   };
 
-  return (
-    <div style={styles.wrapper}>
-      {renderNavbar()} 
-      <div style={styles.contactSection}>
-        <div className="container">
-          <h2 style={styles.heading}>Contact Us</h2>
-          <p style={styles.subHeading}>We would love to hear from you! Please fill out the form below and we will get in touch with you shortly.</p>
-          <div className="row">
-            <div className="col-md-6">
-              <form>
-                <div className="mb-3">
-                  <label htmlFor="name" className="form-label">Name</label>
-                  <input type="text" className="form-control" id="name" placeholder="Enter your name" />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email</label>
-                  <input type="email" className="form-control" id="email" placeholder="Enter your email" />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="message" className="form-label">Message</label>
-                  <textarea className="form-control" id="message" rows="4" placeholder="Your message"></textarea>
-                </div>
-                <button type="submit" className="btn btn-primary">Submit</button>
-              </form>
-            </div>
-            <div className="col-md-6">
-              <h4 style={styles.contactInfoHeading}>Our Office</h4>
-              <p>123 JobPortal Street, JobCity, JP 45678</p>
-              <h4 style={styles.contactInfoHeading}>Phone</h4>
-              <p>+123 456 7890</p>
-              <h4 style={styles.contactInfoHeading}>Email</h4>
-              <p>support@jobportal.com</p>
-              <div style={styles.socialIcons}>
-                <a href="#" style={styles.icon}><i className="fab fa-facebook-f"></i></a>
-                <a href="#" style={styles.icon}><i className="fab fa-twitter"></i></a>
-                <a href="#" style={styles.icon}><i className="fab fa-linkedin-in"></i></a>
-                <a href="#" style={styles.icon}><i className="fab fa-instagram"></i></a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <Footer />
-    </div>
-  );
-};
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    if (!formData.message.trim()) newErrors.message = 'Message is required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-const styles = {
-  wrapper: {
-    fontFamily: 'Arial, sans-serif',
-  },
-  contactSection: {
-    padding: '60px 0',
-    backgroundColor: '#f8f9fa',
-  },
-  heading: {
-    fontSize: '2.5rem',
-    marginBottom: '20px',
-    textAlign: 'center',
-  },
-  subHeading: {
-    fontSize: '1.2rem',
-    marginBottom: '40px',
-    textAlign: 'center',
-  },
-  contactInfoHeading: {
-    fontSize: '1.5rem',
-    marginTop: '20px',
-  },
-  socialIcons: {
-    marginTop: '30px',
-  },
-  icon: {
-    color: '#007bff',
-    fontSize: '1.5rem',
-    marginRight: '15px',
-    transition: 'color 0.3s ease',
-  },
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+
+    try {
+      const response = await axios.post('http://localhost:3000/contact/submit-message', formData);
+      
+      setAlert({
+        open: true,
+        message: response.data.message,
+        severity: 'success'
+      });
+
+      // Clear form
+      setFormData({
+        name: '',
+        email: '',
+        message: ''
+      });
+    } catch (error) {
+      setAlert({
+        open: true,
+        message: error.response?.data?.message || 'Error sending message',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {renderNavbar()}
+      <Container sx={{ py: 8, flex: 1 }}>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={3} sx={{ p: 4, height: '100%' }}>
+              <Typography variant="h4" sx={{ mb: 4, color: '#360275', fontWeight: 'bold' }}>
+                Contact Us
+              </Typography>
+              <form onSubmit={handleSubmit}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  error={!!errors.name}
+                  helperText={errors.name}
+                  sx={{ mb: 3 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                  sx={{ mb: 3 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Message"
+                  name="message"
+                  multiline
+                  rows={4}
+                  value={formData.message}
+                  onChange={handleChange}
+                  error={!!errors.message}
+                  helperText={errors.message}
+                  sx={{ mb: 3 }}
+                />
+                <Button 
+                  type="submit"
+                  variant="contained"
+                  sx={{ 
+                    bgcolor: '#360275',
+                    '&:hover': { bgcolor: '#2A0163' }
+                  }}
+                >
+                  Send Message
+                </Button>
+              </form>
+            </Paper>
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Paper elevation={3} sx={{ p: 4, height: '100%' }}>
+              <Typography variant="h4" sx={{ mb: 4, color: '#360275', fontWeight: 'bold' }}>
+                Get in Touch
+              </Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 1, color: '#360275' }}>
+                  Our Office
+                </Typography>
+                <Typography>123 JobPortal Street, JobCity, JP 45678</Typography>
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 1, color: '#360275' }}>
+                  Phone
+                </Typography>
+                <Typography>+123 456 7890</Typography>
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 1, color: '#360275' }}>
+                  Email
+                </Typography>
+                <Typography>support@jobportal.com</Typography>
+              </Box>
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" sx={{ mb: 2, color: '#360275' }}>
+                  Follow Us
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  {/* Add your social media icons/links here */}
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={6000}
+        onClose={() => setAlert(prev => ({ ...prev, open: false }))}
+      >
+        <Alert 
+          onClose={() => setAlert(prev => ({ ...prev, open: false }))} 
+          severity={alert.severity}
+          sx={{ width: '100%' }}
+        >
+          {alert.message}
+        </Alert>
+      </Snackbar>
+
+      <Footer />
+    </Box>
+  );
 };
 
 export default ContactUs;

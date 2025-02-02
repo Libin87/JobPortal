@@ -20,7 +20,7 @@ import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import { MenuItem } from "@mui/material";
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
@@ -43,6 +43,7 @@ const GradientButton = styled(Button)(({ theme }) => ({
   margin: theme.spacing(1),
 }));
 
+
 const Selection = () => {
   const [testDetails, setTestDetails] = useState({
     testName: '',
@@ -50,61 +51,211 @@ const Selection = () => {
     totalMarks: '',
     passingMarks: '',
     jobId: '',
+    numberOfQuestions: '',
+    difficultyLevel: ''
   });
 
-  const [questions, setQuestions] = useState([{
-    question: '',
-    options: ['', '', '', ''],
-    correctAnswer: '',
-    marks: ''
-  }]);
-
-  const [openDialog, setOpenDialog] = useState(false);
+  const [questions, setQuestions] = useState([]);
   const [availableJobs, setAvailableJobs] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [openDialog, setOpenDialog] = useState(false);
+  const difficultyLevels = ['Easy', 'Intermediate', 'Advanced', 'Expert'];
+  const [jobsWithTests, setJobsWithTests] = useState([]);
 
   useEffect(() => {
-    // Fetch employer's posted jobs
     const fetchJobs = async () => {
       try {
         const userId = sessionStorage.getItem('userId');
-        const response = await axios.get(`http://localhost:3000/jobs/myjobs/${userId}`);
+        console.log('UserId:', userId); // Debugging
+        const response = await axios.get(`http://localhost:3000/jobs/myjobs1?userId=${userId}`);
+        console.log('Fetched Jobs:', response.data); // Debugging
+
         setAvailableJobs(response.data);
+        console.log('Available Jobs:', availableJobs);
+
       } catch (error) {
         console.error('Error fetching jobs:', error);
       }
     };
     fetchJobs();
+    const fetchJobsAndTests = async () => {
+      try {
+        const userId = sessionStorage.getItem('userId');
+        const jobsResponse = await axios.get(`http://localhost:3000/jobs/myjobs1?userId=${userId}`);
+        const jobs = jobsResponse.data;
+
+        // Fetch existing tests for these jobs
+        const testsPromises = jobs.map(job => 
+          axios.get(`http://localhost:3000/test/check-test/${job._id}`)
+            .catch(err => ({ data: null }))
+        );
+        
+        const testsResponses = await Promise.all(testsPromises);
+        const jobsWithExistingTests = jobs.map((job, index) => ({
+          ...job,
+          hasTest: !!testsResponses[index].data
+        }));
+
+        setAvailableJobs(jobsWithExistingTests);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        toast.error('Error fetching jobs');
+      }
+    };
+    fetchJobsAndTests();
   }, []);
 
   const handleTestDetailsChange = (e) => {
-    setTestDetails({
-      ...testDetails,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleQuestionChange = (index, field, value) => {
-    const newQuestions = [...questions];
-    if (field === 'options') {
-      newQuestions[index].options[value.optionIndex] = value.text;
-    } else {
-      newQuestions[index][field] = value;
+    const { name, value } = e.target;
+    
+    if (name === 'jobId') {
+      const selectedJob = availableJobs.find(job => job._id === value);
+      if (selectedJob?.hasTest) {
+        toast.error('This job already has an associated test. Each job can have only one test.');
+        return;
+      }
     }
-    setQuestions(newQuestions);
+
+    setTestDetails(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  const validateTestName = (value) => {
+    if (!value) return 'Test name is required';
+  
+    if (!/^[a-zA-Z\s]{1,100}[0-9]{0,2}$/.test(value)) {
+      return 'Enter a valid TestName';
+    } else if (/(.)\1{3,}/.test(value)) {
+      return 'Enter a valid TestName';
+    }
+  
+    if (value.length > 25) {
+      return 'Test name cannot exceed 25 characters';
+    }
+  
+    return '';
+  };
+  
+
+  const validateDuration = (value) => {
+    const duration = Number(value);
+    if (duration < 10 || duration > 180) {
+      return 'Duration must be between 10 and 180 minutes';
+    }
+    return '';
   };
 
-  const addQuestion = () => {
-    setQuestions([...questions, {
-      question: '',
-      options: ['', '', '', ''],
-      correctAnswer: '',
-      marks: ''
-    }]);
+  const validateTotalMarks = (value) => {
+    const marks = Number(value);
+    if (marks < 10 || marks > 180) {
+      return 'Total marks must be between 10 and 180';
+    }
+    return '';
   };
 
-  const removeQuestion = (index) => {
-    const newQuestions = questions.filter((_, i) => i !== index);
-    setQuestions(newQuestions);
+  const validatePassingMarks = (value, totalMarks) => {
+    if (!value) return 'Passing marks is required';
+    const passingMarks = Number(value);
+    const minimumPassingMarks = Math.ceil(Number(totalMarks) * 0.25);
+    if (passingMarks < minimumPassingMarks) {
+      return `Passing marks should be at least ${minimumPassingMarks} (25% of total marks)`;
+    }
+    if (passingMarks > totalMarks) {
+      return 'Passing marks cannot exceed total marks';
+    }
+    return '';
+  };
+  const validateNumberOfQuestions = (value) => {
+    if (!value) return 'Number of questions is required';
+    if (value < 5) return 'Minimum 5 questions required';
+    if (value > 25) return 'Maximum 25 questions allowed';
+    return '';
+  };
+  const validateJobId = (value) => {
+    if (!value) return 'Selecting a job is required';
+    return '';
+  };
+  
+  const handleTestDetailsBlur = (e) => {
+    const { name, value } = e.target;
+    let error = '';
+
+    switch (name) {
+      case 'testName':
+        error = validateTestName(value);
+        break;
+      case 'duration':
+        error = validateDuration(value);
+        break;
+      case 'totalMarks':
+        error = validateTotalMarks(value);
+        break;
+      case 'passingMarks':
+        error = validatePassingMarks(value, testDetails.totalMarks);
+        break;
+      case 'numberOfQuestions':
+        error = validateNumberOfQuestions(value);
+        break;
+      case 'jobId':
+        error = validateJobId(value);
+        break;
+    }
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
+
+  const fetchAndSetQuestions = async () => {
+    const { numberOfQuestions, totalMarks, difficultyLevel, jobId } = testDetails;
+    
+    if (!numberOfQuestions || !totalMarks || !difficultyLevel || !jobId) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/questionBank/questions/${difficultyLevel}?count=${numberOfQuestions}&jobId=${jobId}`
+      );
+
+      if (response.data.length < numberOfQuestions) {
+        toast.error(`Only ${response.data.length} questions available for this difficulty level`);
+        return;
+      }
+
+      const marksPerQuestion = (Number(totalMarks) / Number(numberOfQuestions)).toFixed(2);
+
+      const formattedQuestions = response.data.map(q => ({
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        marks: marksPerQuestion
+      }));
+
+      setQuestions(formattedQuestions);
+      toast.success('Questions loaded successfully!');
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      toast.error('Error loading questions');
+    }
+  };
+
+  const validateInitialDetails = () => {
+    const newErrors = {};
+    
+    if (!testDetails.testName) newErrors.testName = 'Test name is required';
+    if (!testDetails.duration) newErrors.duration = 'Duration is required';
+    if (!testDetails.totalMarks) newErrors.totalMarks = 'Total marks is required';
+    if (!testDetails.passingMarks) newErrors.passingMarks = 'Passing marks is required';
+    if (!testDetails.numberOfQuestions) newErrors.numberOfQuestions = 'Number of questions is required';
+    if (!testDetails.difficultyLevel) newErrors.difficultyLevel = 'Difficulty level is required';
+    if (!testDetails.jobId) newErrors.jobId = 'Job is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
@@ -123,15 +274,22 @@ const Selection = () => {
         }
       }
 
+      // Convert numeric strings to numbers
       const testData = {
         ...testDetails,
+        duration: Number(testDetails.duration),
+        totalMarks: Number(testDetails.totalMarks),
+        passingMarks: Number(testDetails.passingMarks),
+        numberOfQuestions: Number(testDetails.numberOfQuestions),
         questions,
-        employerId: sessionStorage.getItem('userId'),
-        ...(testDetails.jobId && { jobId: testDetails.jobId })
+        employerId: sessionStorage.getItem('userId')
       };
 
-      const response = await axios.post('http://localhost:3000/test/create', testData);
-      
+      console.log('Sending test data:', testData); // Debug log
+
+      const response = await axios.post('http://localhost:3000/test/createTest', testData);
+      console.log('Server response:', response.data); // Debug log
+
       if (response.data) {
         toast.success('Test created successfully!');
         setOpenDialog(true);
@@ -142,17 +300,14 @@ const Selection = () => {
           totalMarks: '',
           passingMarks: '',
           jobId: '',
+          numberOfQuestions: '',
+          difficultyLevel: ''
         });
-        setQuestions([{
-          question: '',
-          options: ['', '', '', ''],
-          correctAnswer: '',
-          marks: ''
-        }]);
+        setQuestions([]);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error creating test');
-      console.error('Error creating test:', error);
+      console.error('Error details:', error.response?.data || error); // Enhanced error logging
+      toast.error(error.response?.data?.message || 'Error creating test. Please check console for details.');
     }
   };
 
@@ -166,16 +321,7 @@ const Selection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Typography 
-            variant="h4" 
-            gutterBottom
-            sx={{
-              fontWeight: 'bold',
-              color: '#1a237e',
-              textAlign: 'center',
-              mb: 4
-            }}
-          >
+          <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
             Create Selection Test
           </Typography>
 
@@ -188,6 +334,9 @@ const Selection = () => {
                   name="testName"
                   value={testDetails.testName}
                   onChange={handleTestDetailsChange}
+                  onBlur={handleTestDetailsBlur}
+                  error={!!errors.testName}
+                  helperText={errors.testName}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -198,6 +347,10 @@ const Selection = () => {
                   type="number"
                   value={testDetails.duration}
                   onChange={handleTestDetailsChange}
+                  onBlur={handleTestDetailsBlur}
+                  error={!!errors.duration}
+                  helperText={errors.duration}
+                  inputProps={{ min: 10, max: 180 }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -208,6 +361,9 @@ const Selection = () => {
                   type="number"
                   value={testDetails.totalMarks}
                   onChange={handleTestDetailsChange}
+                  onBlur={handleTestDetailsBlur}
+                  error={!!errors.totalMarks}
+                  helperText={errors.totalMarks}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -218,101 +374,116 @@ const Selection = () => {
                   type="number"
                   value={testDetails.passingMarks}
                   onChange={handleTestDetailsChange}
+                  onBlur={handleTestDetailsBlur}
+                  error={!!errors.passingMarks}
+                  helperText={errors.passingMarks}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
-                  select
                   fullWidth
-                  label="Associated Job (Optional)"
-                  name="jobId"
-                  value={testDetails.jobId}
+                  label="Number of Questions"
+                  name="numberOfQuestions"
+                  type="number"
+                  value={testDetails.numberOfQuestions}
                   onChange={handleTestDetailsChange}
-                  SelectProps={{
-                    native: true,
+                  onBlur={handleTestDetailsBlur}
+                  error={!!errors.numberOfQuestions}
+                  helperText={errors.numberOfQuestions}
+                  inputProps={{ min: 1 }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+  <TextField
+    select
+    fullWidth
+    label="Difficulty Level"
+    name="difficultyLevel"
+    value={testDetails.difficultyLevel}
+    onChange={handleTestDetailsChange}
+    error={!!errors.difficultyLevel}
+    helperText={errors.difficultyLevel}
+  >
+    {difficultyLevels.map((level) => (
+      <MenuItem key={level} value={level}>
+        {level}
+      </MenuItem>
+    ))}
+  </TextField>
+</Grid>
+
+<Grid item xs={12}>
+        <TextField
+          select
+          fullWidth
+          label="Associated Job"
+          name="jobId"
+          value={testDetails.jobId}
+          onChange={handleTestDetailsChange}
+          error={!!errors.jobId}
+          helperText={errors.jobId}
+          onBlur={handleTestDetailsBlur}
+        >
+          <MenuItem value="">None</MenuItem>
+          {availableJobs.map((job) => (
+            <MenuItem 
+              key={job._id} 
+              value={job._id}
+              disabled={job.hasTest} // Disable jobs that already have tests
+            >
+              {job.jobTitle} {job.hasTest ? '(Test Already Created)' : ''}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+              <Grid item xs={12}>
+                <GradientButton
+                  fullWidth
+                  onClick={() => {
+                    if (validateInitialDetails()) {
+                      fetchAndSetQuestions();
+                    }
                   }}
                 >
-                  <option value="">None</option>
-                  {availableJobs.map((job) => (
-                    <option key={job._id} value={job._id}>
-                      {job.title}
-                    </option>
-                  ))}
-                </TextField>
+                  Generate Questions
+                </GradientButton>
               </Grid>
             </Grid>
           </StyledPaper>
 
-          {questions.map((question, index) => (
-            <StyledPaper key={index}>
-              <Grid container spacing={3}>
-                <Grid item xs={11}>
-                  <TextField
-                    fullWidth
-                    label={`Question ${index + 1}`}
-                    value={question.question}
-                    onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={1}>
-                  <IconButton onClick={() => removeQuestion(index)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </Grid>
-                {question.options.map((option, optionIndex) => (
-                  <Grid item xs={12} sm={6} key={optionIndex}>
-                    <TextField
-                      fullWidth
-                      label={`Option ${optionIndex + 1}`}
-                      value={option}
-                      onChange={(e) => handleQuestionChange(index, 'options', {
-                        optionIndex,
-                        text: e.target.value
-                      })}
-                    />
+          {questions.length > 0 && (
+            <>
+              {questions.map((question, index) => (
+                <StyledPaper key={index}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1">
+                        Question {index + 1} (Marks: {question.marks})
+                      </Typography>
+                      <Typography variant="body1">{question.question}</Typography>
+                    </Grid>
+                    {question.options.map((option, optIndex) => (
+                      <Grid item xs={12} sm={6} key={optIndex}>
+                        <Typography>
+                          Option {optIndex + 1}: {option}
+                        </Typography>
+                      </Grid>
+                    ))}
+                    <Grid item xs={12}>
+                      <Typography color="primary">
+                        Correct Answer: Option {question.correctAnswer}
+                      </Typography>
+                    </Grid>
                   </Grid>
-                ))}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Correct Answer (Option number)"
-                    type="number"
-                    value={question.correctAnswer}
-                    onChange={(e) => handleQuestionChange(index, 'correctAnswer', e.target.value)}
-                    inputProps={{ min: 1, max: 4 }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Marks for this question"
-                    type="number"
-                    value={question.marks}
-                    onChange={(e) => handleQuestionChange(index, 'marks', e.target.value)}
-                  />
-                </Grid>
-              </Grid>
-            </StyledPaper>
-          ))}
-
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <GradientButton onClick={addQuestion}>
-              Add Question
-            </GradientButton>
-            <GradientButton onClick={handleSubmit}>
-              Create Test
-            </GradientButton>
-          </Box>
-
-          <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-            <DialogTitle>Success</DialogTitle>
-            <DialogContent>
-              Test has been created successfully!
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenDialog(false)}>OK</Button>
-            </DialogActions>
-          </Dialog>
+                </StyledPaper>
+              ))}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <GradientButton onClick={handleSubmit}>
+                  Create Test
+                </GradientButton>
+              </Box>
+            </>
+          )}
         </motion.div>
       </Container>
     </>
@@ -320,3 +491,5 @@ const Selection = () => {
 };
 
 export default Selection;
+
+//create test copy

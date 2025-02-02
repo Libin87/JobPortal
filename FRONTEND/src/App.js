@@ -34,6 +34,10 @@ import CreateTest from './pages/employer/CreateTest';
 import TakeTest from './pages/employee/TakeTest';
 import Selection from './pages/employer/Selection';
 import TestComplete from './pages/employee/TestComplete';
+import ContactMessages from './pages/admin/ContactMessages';
+
+// Add this to your routes
+
 
 const ProtectedRoute = ({ redirectPath = '/login', allowedRole }) => {
   const isLoggedIn = sessionStorage.getItem('userId') !== null;
@@ -136,6 +140,7 @@ function App() {
           <Route path='/adminJobApproval' element={<AdminJobApproval />} />
           <Route path='/navbaradmin' element={<NavbarAdmin />} />
           <Route path='/adminJobAprooval' element={<AdminJobApproval />} />
+          <Route path='/contact-messages' element={<ContactMessages />} />
         </Route>
 
         {/* Protected Routes for Employer */}

@@ -68,11 +68,7 @@ const NavbarEmployer = () => {
                 Admin Dashboard
               </NavLink>
             </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/contactus" style={styles.navLink}>
-                Contact
-              </NavLink>
-            </li>
+            
             <li className="nav-item">
               <NavLink className="nav-link" to="/about" style={styles.navLink}>
                 About

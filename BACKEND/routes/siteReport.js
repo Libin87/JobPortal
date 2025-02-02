@@ -1,55 +1,9 @@
-
-// const express = require('express');
-// const router = express.Router();
-// const User = require('../model/userData');
-// const Job = require('../model/job');
-
-// // Assuming user roles are stored in a 'role' field in the User model
-// router.get('/siteReport', async (req, res) => {
-//   try {
-//     // Fetch the total number of users
-//     const totalUsers = await User.countDocuments();
-
-//     // Fetch the count for each user type (assuming a 'role' field exists)
-//     const totalEmployees = await User.countDocuments({ role: 'employee' });
-//     const totalEmployers = await User.countDocuments({ role: 'employer' });
-
-//     // Fetch the total number of jobs and active jobs
-//     const totalJobs = await Job.countDocuments();
-//     const activeJobs = await Job.countDocuments({ status: 'active' });
-
-//     // Count applications
-//     const applications = await Job.aggregate([
-//       {
-//         $group: {
-//           _id: null,
-//           totalApplications: { $sum: '$applications' }
-//         }
-//       }
-//     ]);
-
-//     // Respond with all aggregated data
-//     res.status(200).json({
-//       totalUsers,
-//       totalJobs,
-//       activeJobs,
-//       applications: applications[0]?.totalApplications || 0,
-//       totalEmployees,
-//       totalEmployers
-//     });
-//   } catch (error) {
-//     console.error('Error fetching site report data:', error);
-//     res.status(500).json({ message: 'Failed to load site report data' });
-//   }
-// });
-
-// module.exports = router;
-
 const express = require('express');
 const router = express.Router();
 const User = require('../model/userData');
 const Job = require('../model/job');
 const Application = require('../model/applicationModel');
+const { Test } = require('../model/testModel');
 
 // Route to get site report with additional application details
 router.get('/siteReport', async (req, res) => {
@@ -64,6 +18,9 @@ router.get('/siteReport', async (req, res) => {
     // Fetch the total number of jobs and active jobs
     const totalJobs = await Job.countDocuments();
     const activeJobs = await Job.countDocuments({ status: 'active' });
+
+    // Fetch total number of tests
+    const totalTests = await Test.countDocuments();
 
     // Aggregate applications data by approval status
     const applicationsReport = await Application.aggregate([
@@ -100,7 +57,8 @@ router.get('/siteReport', async (req, res) => {
       totalJobs,
       activeJobs,
       applications: totalApplications,
-      totalApplications,  // Include total applications
+      totalApplications,
+      totalTests,
       applicationsByApprovalStatus,
       applicationsByEmployer,
       totalEmployees,

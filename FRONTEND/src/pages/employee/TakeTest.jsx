@@ -107,31 +107,22 @@ const TakeTest = () => {
 
     // Calculate total marks and score
     test.questions.forEach((question, index) => {
-      // Add to total marks
       const questionMarks = parseInt(question.marks) || 0;
       totalMarks += questionMarks;
 
-      // Check if answer is correct and add to score
       const userAnswer = answers[question._id];
-      const correctAnswer = question.correctAnswer;
+      console.log(`Question ${index + 1} - User Answer:`, userAnswer);
+      console.log(`Question ${index + 1} - Correct Answer:`, question.correctAnswer);
 
-      console.log(`Question ${index + 1}:`, {
-        questionId: question._id,
-        question: question.question,
-        userAnswer,
-        correctAnswer,
-        marks: questionMarks,
-        isCorrect: String(userAnswer) === String(correctAnswer)
-      });
-
-      if (String(userAnswer) === String(correctAnswer)) {
+      // Convert both answers to strings and compare
+      if (userAnswer && question.correctAnswer && 
+          userAnswer.toString() === question.correctAnswer.toString()) {
         score += questionMarks;
         correctAnswers++;
         console.log(`Correct answer! Adding ${questionMarks} marks. Current score: ${score}`);
       }
     });
 
-    // Calculate result
     const result = score >= test.passingMarks ? 'Pass' : 'Fail';
     const timeTaken = test.duration * 60 - timeLeft;
 

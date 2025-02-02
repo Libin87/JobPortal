@@ -7,6 +7,43 @@ const { Test } = require('../model/testModel');
 const Application = require('../model/applicationModel'); // Add this import
 
 // Route to create a test
+// router.post('/createTest', async (req, res) => {
+//   try {
+//     const { testName, employerId, jobId, duration, passingMarks, totalMarks, questions } = req.body;
+
+//     // Validate input
+//     if (!testName || !duration || !passingMarks || !totalMarks || !questions || !Array.isArray(questions)) {
+//       return res.status(400).json({ message: 'Missing or invalid fields' });
+//     }
+
+//     // Validate questions
+//     for (const question of questions) {
+//       if (!question.question || !Array.isArray(question.options) || question.options.length === 0 || !question.correctAnswer || !question.marks) {
+//         return res.status(400).json({ message: 'Invalid question format' });
+//       }
+//     }
+
+//     const newTest = new Test({
+//       testName,
+//       employerId,
+//       jobId,
+//       duration,
+//       passingMarks,
+//       totalMarks,
+//       questions,
+//       testStatus:'Pending'
+//     });
+
+//     await newTest.save();
+//     res.status(201).json({ message: 'Test created successfully', test: newTest });
+//   } catch (error) {
+//     console.error('Error creating test:', error);
+//     res.status(500).json({ message: 'Error creating test', error: error.message });
+//   }
+// });
+
+// ... existing code ...
+
 router.post('/createTest', async (req, res) => {
   try {
     const { testName, employerId, jobId, duration, passingMarks, totalMarks, questions } = req.body;
@@ -14,6 +51,16 @@ router.post('/createTest', async (req, res) => {
     // Validate input
     if (!testName || !duration || !passingMarks || !totalMarks || !questions || !Array.isArray(questions)) {
       return res.status(400).json({ message: 'Missing or invalid fields' });
+    }
+
+    // If jobId is provided, check if a test already exists for this job
+    if (jobId) {
+      const existingTest = await Test.findOne({ jobId });
+      if (existingTest) {
+        return res.status(400).json({ 
+          message: 'A test already exists for this job. Each job can have only one test.' 
+        });
+      }
     }
 
     // Validate questions
@@ -31,7 +78,7 @@ router.post('/createTest', async (req, res) => {
       passingMarks,
       totalMarks,
       questions,
-      testStatus:'Pending'
+      testStatus: 'Pending'
     });
 
     await newTest.save();
@@ -41,7 +88,6 @@ router.post('/createTest', async (req, res) => {
     res.status(500).json({ message: 'Error creating test', error: error.message });
   }
 });
-
 // Route to submit a test result
 router.post('/submitTest', async (req, res) => {
   try {
@@ -242,6 +288,10 @@ router.get('/get-test/:testId', async (req, res) => {
   try {
     const { testId } = req.params;
     
+    if (!mongoose.Types.ObjectId.isValid(testId)) {
+      return res.status(400).json({ message: 'Invalid test ID format' });
+    }
+
     const test = await Test.findById(testId);
     
     if (!test) {
@@ -256,15 +306,18 @@ router.get('/get-test/:testId', async (req, res) => {
       totalMarks: test.totalMarks,
       passingMarks: test.passingMarks,
       jobId: test.jobId,
+      numberOfQuestions: test.questions.length,
+      difficultyLevel: test.difficultyLevel,
       questions: test.questions.map(q => ({
         _id: q._id,
         question: q.question,
         options: q.options,
-        marks: q.marks
+        marks: q.marks,
+        correctAnswer: q.correctAnswer
       }))
     };
 
-    // If there's a jobId, fetch job details separately
+    // If there's a jobId, fetch job details
     if (test.jobId) {
       const job = await Job.findById(test.jobId);
       if (job) {
@@ -282,5 +335,168 @@ router.get('/get-test/:testId', async (req, res) => {
     });
   }
 });
+
+// Add this new route to check if a test exists for a job
+router.get('/check-test/:jobId', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const existingTest = await Test.findOne({ jobId });
+    
+    if (existingTest) {
+      res.json(existingTest);
+    } else {
+      res.status(404).json({ message: 'No test found for this job' });
+    }
+  } catch (error) {
+    console.error('Error checking test:', error);
+    res.status(500).json({ message: 'Error checking test', error: error.message });
+  }
+});
+
+// ... existing code ...
+
+// Get all tests created by an employer
+router.get('/employer-tests/:employerId', async (req, res) => {
+  try {
+    const { employerId } = req.params;
+    
+    const tests = await Test.aggregate([
+      {
+        $match: { employerId: new mongoose.Types.ObjectId(employerId) }
+      },
+      {
+        $lookup: {
+          from: 'jobs',
+          localField: 'jobId',
+          foreignField: '_id',
+          as: 'jobDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$jobDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          testName: 1,
+          duration: 1,
+          totalMarks: 1,
+          passingMarks: 1,
+          createdAt: 1,
+          testStatus: 1,
+          jobTitle: '$jobDetails.jobTitle',
+          numberOfQuestions: { $size: '$questions' },  // Count of questions
+          difficultyLevel: 1
+        }
+      }
+    ]);
+
+    res.json(tests);
+  } catch (error) {
+    console.error('Error fetching employer tests:', error);
+    res.status(500).json({ 
+      message: 'Error fetching tests', 
+      error: error.message 
+    });
+  }
+});
+
+// Delete a test
+router.delete('/delete-test/:testId', async (req, res) => {
+  try {
+    const { testId } = req.params;
+    await Test.findByIdAndDelete(testId);
+    res.json({ message: 'Test deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting test:', error);
+    res.status(500).json({ 
+      message: 'Error deleting test', 
+      error: error.message 
+    });
+  }
+});
+
+// ... rest of existing code ...
+// ... existing code ...
+
+// Route to update a test
+router.put('/update-test/:testId', async (req, res) => {
+  try {
+    const { testId } = req.params;
+    const { 
+      testName, 
+      duration, 
+      totalMarks, 
+      passingMarks, 
+      numberOfQuestions, 
+      difficultyLevel,
+      questions,
+      jobId 
+    } = req.body;
+
+    // Validate input
+    if (!testName || !duration || !passingMarks || !totalMarks || !numberOfQuestions || !difficultyLevel) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate questions
+    if (questions && Array.isArray(questions)) {
+      for (const question of questions) {
+        if (!question.question || !Array.isArray(question.options) || 
+            question.options.length === 0 || !question.correctAnswer || 
+            !question.marks) {
+          return res.status(400).json({ message: 'Invalid question format' });
+        }
+      }
+    }
+
+    // Find and update the test
+    const updatedTest = await Test.findByIdAndUpdate(
+      testId,
+      {
+        testName,
+        duration,
+        totalMarks,
+        passingMarks,
+        numberOfQuestions,
+        difficultyLevel,
+        questions: questions || [],
+        jobId,
+        updatedAt: new Date()
+      },
+      { 
+        new: true,
+        runValidators: true 
+      }
+    );
+
+    if (!updatedTest) {
+      return res.status(404).json({ message: 'Test not found' });
+    }
+
+    // Fetch associated job details for the response
+    const job = await Job.findById(updatedTest.jobId);
+    const testWithJobDetails = {
+      ...updatedTest.toObject(),
+      jobTitle: job ? job.jobTitle : null,
+      companyName: job ? job.companyName : null
+    };
+
+    res.json({ 
+      message: 'Test updated successfully', 
+      test: testWithJobDetails 
+    });
+  } catch (error) {
+    console.error('Error updating test:', error);
+    res.status(500).json({ 
+      message: 'Error updating test', 
+      error: error.message 
+    });
+  }
+});
+
+// ... rest of existing code ...
 
 module.exports = router;

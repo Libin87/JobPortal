@@ -1,161 +1,3 @@
-
-
-// import React, { useEffect, useState } from 'react';
-// import axios from 'axios';
-// import {
-//   Container,
-//   Typography,
-//   Grid,
-//   Paper,
-//   Divider
-// } from '@mui/material';
-// import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-// import NavbarAdmin from '../admin/NavbarAdmin';
-// import Footer from '../../components/Footer';
-
-// const COLORS = ['#360275', '#0D6EFD', '#FF8042', '#00C49F'];
-// const USER_COLORS = ['#360275', '#FF8042'];
-
-// const SiteReport = () => {
-//   const [report, setReport] = useState({
-//     totalUsers: 0,
-//     totalJobs: 0,
-//     activeJobs: 0,
-//     applications: 0,
-//     totalEmployees: 0,
-//     totalEmployers: 0
-//   });
-//   const [error, setError] = useState('');
-
-//   useEffect(() => {
-//     const fetchReportData = async () => {
-//       try {
-//         const response = await axios.get('http://localhost:3000/api/siteReport');
-//         setReport(response.data);
-//       } catch (err) {
-//         console.error('Error fetching site report data:', err);
-//         setError('Failed to load site report.');
-//       }
-//     };
-
-//     fetchReportData();
-//   }, []);
-
-//   const mainData = [
-//     { name: 'Total Users', value: report.totalUsers },
-//     { name: 'Total Jobs', value: report.totalJobs },
-//     { name: 'Active Jobs', value: report.activeJobs },
-//     { name: 'Applications', value: report.applications },
-//   ];
-
-//   const userTypeData = [
-//     { name: 'Employees', value: report.totalEmployees },
-//     { name: 'Employers', value: report.totalEmployers },
-//   ];
-
-//   return (
-//     <Container style={{ maxWidth: '100%', margin: '0 auto' }}>
-//       <NavbarAdmin />
-//       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '40px', color: '#360275' }}>
-//         Site Report
-//       </Typography>
-
-//       {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-
-//       <Grid container spacing={4} justifyContent="center" style={{ marginTop: '30px' }}>
-//         <Grid item xs={12} md={6}>
-//           <Paper elevation={3} style={{ padding: '20px' }}>
-//             <Typography variant="h4" style={{ textAlign: 'center', color: '#360275' }}>
-//               Overview of Metrics
-//             </Typography>
-//             <ResponsiveContainer width="100%" height={300}>
-//               <PieChart>
-//                 <Pie
-//                   data={mainData}
-//                   cx="50%"
-//                   cy="50%"
-//                   outerRadius={100}
-//                   dataKey="value"
-//                   label
-//                 >
-//                   {mainData.map((entry, index) => (
-//                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-//                   ))}
-//                 </Pie>
-//                 <Tooltip />
-//                 <Legend verticalAlign="bottom" />
-//               </PieChart>
-//             </ResponsiveContainer>
-//           </Paper>
-//         </Grid>
-
-//         {/* Pie Chart for Total Users Breakdown */}
-//         <Grid item xs={12} md={6}>
-//           <Paper elevation={3} style={{ padding: '20px' }}>
-//             <Typography variant="h4" style={{ textAlign: 'center', color: '#360275' }}>
-//               Total Users 
-//             </Typography>
-//             <ResponsiveContainer width="100%" height={300}>
-//               <PieChart>
-//                 <Pie
-//                   data={userTypeData}
-//                   cx="50%"
-//                   cy="50%"
-//                   outerRadius={100}
-//                   dataKey="value"
-//                   label
-//                 >
-//                   {userTypeData.map((entry, index) => (
-//                     <Cell key={`cell-${index}`} fill={USER_COLORS[index % USER_COLORS.length]} />
-//                   ))}
-//                 </Pie>
-//                 <Tooltip />
-//                 <Legend verticalAlign="bottom" />
-//               </PieChart>
-//             </ResponsiveContainer>
-//           </Paper>
-//         </Grid>
-
-//         {/* Additional Details Section */}
-//         <Grid item xs={12} md={6}>
-//           <Paper elevation={3} style={{ padding: '20px' }}>
-//             <Typography variant="h4" style={{ textAlign: 'center', color: '#360275' }}>
-//               Detailed Information
-//             </Typography>
-//             <Divider style={{ margin: '10px 0' }} />
-//             <Grid container spacing={2} direction="column" style={{ paddingLeft: '10px' }}>
-//               <Grid item>
-//                 <Typography variant="body1" style={{ color: '#360275', fontSize: '1.6rem' }}>
-//                   <strong>Total Users:</strong> {report.totalUsers}
-//                 </Typography>
-//               </Grid>
-//               <Grid item>
-//                 <Typography variant="body1" style={{ color: '#0D6EFD', fontSize: '1.6rem' }}>
-//                   <strong>Total Jobs:</strong> {report.totalJobs}
-//                 </Typography>
-//               </Grid>
-//               <Grid item>
-//                 <Typography variant="body1" style={{ color: '#FF8042', fontSize: '1.6rem' }}>
-//                   <strong>Active Jobs:</strong> {report.activeJobs}
-//                 </Typography>
-//               </Grid>
-//               <Grid item>
-//                 <Typography variant="body1" style={{ color: '#00C49F', fontSize: '1.6rem' }}>
-//                   <strong>Applications Submitted:</strong> {report.applications}
-//                 </Typography>
-//               </Grid>
-//             </Grid>
-//           </Paper>
-//         </Grid>
-//       </Grid>
-
-//       <Footer />
-//     </Container>
-//   );
-// };
-
-// export default SiteReport;
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
@@ -163,16 +5,37 @@ import {
   Typography,
   Grid,
   Paper,
-  Divider
+  Divider,
+  Box,
+  Card,
+  CardContent,
+  useTheme
 } from '@mui/material';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid
+} from 'recharts';
 import NavbarAdmin from '../admin/NavbarAdmin';
 import Footer from '../../components/Footer';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import WorkIcon from '@mui/icons-material/Work';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import QuizIcon from '@mui/icons-material/Quiz';
 
-const COLORS = ['#360275', '#0D6EFD', '#FF8042', '#00C49F'];
+const COLORS = ['#360275', '#0D6EFD', '#FF8042', '#00C49F', '#8884d8'];
 const USER_COLORS = ['#360275', '#FF8042'];
 
 const SiteReport = () => {
+  const theme = useTheme();
   const [report, setReport] = useState({
     totalUsers: 0,
     totalJobs: 0,
@@ -181,6 +44,7 @@ const SiteReport = () => {
     totalEmployees: 0,
     totalEmployers: 0,
     totalApplications: 0,
+    totalTests: 0,
     applicationsByApprovalStatus: [],
     applicationsByEmployer: [],
   });
@@ -196,162 +60,208 @@ const SiteReport = () => {
         console.error('Error fetching site report data:', err);
         setError('Failed to load site report.');
       }
+
     };
 
     fetchReportData();
   }, []);
 
-  const mainData = report.totalUsers || report.totalJobs || report.activeJobs || report.applications || report.totalApplications
-    ? [
-        { name: 'Total Users', value: report.totalUsers },
-        { name: 'Total Jobs', value: report.totalJobs },
-        { name: 'Active Jobs', value: report.activeJobs },
-        { name: 'Total Applications', value: report.applications },
-        
-      ]
-    : [];
+  const StatCard = ({ title, value, icon, color }) => (
+    <Card sx={{ height: '100%', backgroundColor: color, color: 'white' }}>
+      <CardContent>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box>
+            <Typography variant="h6" component="div">
+              {title}
+            </Typography>
+            <Typography variant="h4">
+              {value}
+            </Typography>
+          </Box>
+          <Box>
+            {icon}
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
 
-  const userTypeData = report.totalEmployees || report.totalEmployers
-    ? [
-        { name: 'Employees', value: report.totalEmployees },
-        { name: 'Employers', value: report.totalEmployers },
-      ]
-    : [];
-    const renderLabel = (entry) => {
-    return `${entry.status}: ${entry.count}`; // Format label to show status and count
+  const mainData = [
+    { name: 'Total Users', value: report.totalUsers },
+    { name: 'Total Jobs', value: report.totalJobs },
+    { name: 'Active Jobs', value: report.activeJobs },
+    { name: 'Total Applications', value: report.totalApplications },
+    { name: 'Total Tests', value: report.totalTests }
+  ].filter(item => item.value > 0);
+
+  const userTypeData = [
+    { name: 'Employees', value: report.totalEmployees },
+    { name: 'Employers', value: report.totalEmployers },
+  ].filter(item => item.value > 0);
+
+  const renderLabel = (entry) => {
+    return `${entry.status}: ${entry.count}`;
   };
 
   return (
-    <Container style={{ maxWidth: '100%', margin: '0 auto' }}>
+    <Box sx={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
       <NavbarAdmin />
-      <Typography variant="h3" style={{ textAlign: 'center', marginTop: '40px', color: '#360275' }}>
-        Site Report
-      </Typography>
-
-      {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-
-      <Grid container spacing={4} justifyContent="center" style={{ marginTop: '30px' }}>
-        <Grid item xs={12} md={6}>
-          <Paper elevation={3} style={{ padding: '20px' }}>
-            <Typography variant="h4" style={{ textAlign: 'center', color: '#360275' }}>
-              Overview of Metrics
-            </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={mainData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  dataKey="value"
-                  label
-                >
-                  {mainData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" />
-              </PieChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Pie Chart for Total Users Breakdown */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={3} style={{ padding: '20px' }}>
-            <Typography variant="h4" style={{ textAlign: 'center', color: '#360275' }}>
-              Total Users
-            </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={userTypeData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  dataKey="value"
-                  label
-                >
-                  {userTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={USER_COLORS[index % USER_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" />
-              </PieChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-      <Paper elevation={3} style={{ padding: '20px' }}>
-        <Typography variant="h4" style={{ textAlign: 'center', color: '#360275' }}>
-          Applications by Approval Status
+      <Container maxWidth="xl" sx={{ pt: 4, pb: 8 }}>
+        <Typography 
+          variant="h3" 
+          sx={{ 
+            textAlign: 'center', 
+            mb: 4, 
+            color: '#360275',
+            fontWeight: 'bold'
+          }}
+        >
+          Site Analytics Dashboard
         </Typography>
-        <Divider style={{ margin: '10px 0' }} />
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={report.applicationsByApprovalStatus}
-              cx="50%"
-              cy="50%"
-              outerRadius={100}
-              dataKey="count"
-              label={renderLabel} // Custom label rendering
-            >
-              {report.applicationsByApprovalStatus.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-           
-          </PieChart>
-        </ResponsiveContainer>
-      </Paper>
-    </Grid>
-        {/* Detailed Information Section */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={3} style={{ padding: '20px' }}>
-            <Typography variant="h4" style={{ textAlign: 'center', color: '#360275' }}>
-              Detailed Information
-            </Typography>
-            <Divider style={{ margin: '10px 0' }} />
-            <Grid container spacing={2} direction="column" style={{ paddingLeft: '10px' }}>
-              <Grid item>
-                <Typography variant="body1" style={{ color: '#360275', fontSize: '1.6rem' }}>
-                  <strong>Total Users:</strong> {report.totalUsers}
-                </Typography>
-              </Grid>
-              <Grid item>
-                <Typography variant="body1" style={{ color: '#0D6EFD', fontSize: '1.6rem' }}>
-                  <strong>Total Jobs:</strong> {report.totalJobs}
-                </Typography>
-              </Grid>
-              <Grid item>
-                <Typography variant="body1" style={{ color: '#FF8042', fontSize: '1.6rem' }}>
-                  <strong>Active Jobs:</strong> {report.activeJobs}
-                </Typography>
-              </Grid>
-              
-              <Grid item>
-                <Typography variant="body1" style={{ color: '#00C49F', fontSize: '1.6rem' }}>
-                  <strong>Total Applications:</strong> {report.totalApplications}
-                </Typography>
-              </Grid>
-            </Grid>
-          </Paper>
+
+        {error && (
+          <Typography color="error" textAlign="center" mb={4}>
+            {error}
+          </Typography>
+        )}
+
+        {/* Quick Stats Cards */}
+        <Grid container spacing={3} mb={4}>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard 
+              title="Total Users" 
+              value={report.totalUsers}
+              icon={<PeopleAltIcon sx={{ fontSize: 40 }} />}
+              color="#360275"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard 
+              title="Total Jobs" 
+              value={report.totalJobs}
+              icon={<WorkIcon sx={{ fontSize: 40 }} />}
+              color="#0D6EFD"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard 
+              title="Applications" 
+              value={report.totalApplications}
+              icon={<AssignmentIcon sx={{ fontSize: 40 }} />}
+              color="#FF8042"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard 
+              title="Total Tests" 
+              value={report.totalTests}
+              icon={<QuizIcon sx={{ fontSize: 40 }} />}
+              color="#00C49F"
+            />
+          </Grid>
         </Grid>
 
-        {/* Applications by Approval Status */}
-        
+        {/* Charts Section */}
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                borderRadius: 2,
+                backgroundColor: 'white',
+                height: '100%'
+              }}
+            >
+              <Typography variant="h5" sx={{ mb: 3, color: '#360275', fontWeight: 'bold' }}>
+                Overview of Metrics
+              </Typography>
+              <ResponsiveContainer width="100%" height={350}>
+                <PieChart>
+                  <Pie
+                    data={mainData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={130}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {mainData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Grid>
 
-        {/* Applications by Employer */}
-        
+          <Grid item xs={12} md={6}>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                borderRadius: 2,
+                backgroundColor: 'white',
+                height: '100%'
+              }}
+            >
+              <Typography variant="h5" sx={{ mb: 3, color: '#360275', fontWeight: 'bold' }}>
+                User Distribution
+              </Typography>
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={userTypeData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#360275">
+                    {userTypeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={USER_COLORS[index % USER_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Grid>
 
-      </Grid>
-
+          <Grid item xs={12}>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                borderRadius: 2,
+                backgroundColor: 'white'
+              }}
+            >
+              <Typography variant="h5" sx={{ mb: 3, color: '#360275', fontWeight: 'bold' }}>
+                Application Status Distribution
+              </Typography>
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={report.applicationsByApprovalStatus}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={160}
+                    dataKey="count"
+                    label={renderLabel}
+                  >
+                    {report.applicationsByApprovalStatus.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
       <Footer />
-    </Container>
+    </Box>
   );
 };
 
