@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Contact = require('../model/contactModel');
 const nodemailer = require('nodemailer');
+const Notification = require('../model/notification');
+const upload = require('../middleware/upload');
 
 require('dotenv').config(); 
 
@@ -18,7 +20,7 @@ module.exports = transporter;
 
 
 // Submit contact message
-router.post('/submit-message', async (req, res) => {
+router.post('/submit-message', upload.single('document'), async (req, res) => {
   try {
     const { name, email, message } = req.body;
 
@@ -36,7 +38,9 @@ router.post('/submit-message', async (req, res) => {
     const newContact = new Contact({
       name,
       email,
-      message
+      message,
+      type: 'general_inquiry',
+      documentUrl: req.file ? `/uploads/documents/${req.file.filename}` : null
     });
 
     await newContact.save();
@@ -123,6 +127,50 @@ router.post('/respond/:messageId', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Error sending response' 
+    });
+  }
+});
+
+// Update the admin contact route
+router.post('/admin', upload.single('document'), async (req, res) => {
+  try {
+    const { userId, jobId, message, type } = req.body;
+    
+    // Create a new contact record
+    const contact = new Contact({
+      userId: userId,
+      jobId: jobId,
+      message: message,
+      type: type || 'job_suspension',
+      status: 'new',
+      documentUrl: req.file ? `/uploads/documents/${req.file.filename}` : null
+    });
+    
+    const savedContact = await contact.save();
+
+    // Create notification for admin
+    const notification = new Notification({
+      userId: userId,  // Store the sender's ID
+      jobId: jobId,
+      title: 'New Message from Employer',
+      message: message,
+      type: 'admin_contact',
+      documentUrl: savedContact.documentUrl
+    });
+    
+    await notification.save();
+
+    res.json({ 
+      success: true,
+      message: 'Message sent successfully',
+      contact: savedContact 
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error sending message',
+      error: error.message 
     });
   }
 });

@@ -107,8 +107,16 @@ router.get('/profile/:userId', async (req, res) => {
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
-    res.status(200).json(profile);
+    
+    // Include the resume field in the response
+    const profileData = {
+      ...profile.toObject(),
+      resume: profile.resume // Make sure resume is included
+    };
+    
+    res.status(200).json(profileData);
   } catch (error) {
+    console.error('Error fetching profile:', error);
     res.status(500).json({ message: 'Error fetching profile', error });
   }
 });

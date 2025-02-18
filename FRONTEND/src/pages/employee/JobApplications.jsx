@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
@@ -19,12 +17,22 @@ import {
   IconButton,
   Avatar,
   Card,
+  Box,
+  CircularProgress,
+  Chip,
+  Dialog as ConfirmDialog,
+  DialogActions,
+  Dialog as TestResultDialog,
+  LinearProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import NavbarEmployee from './NavbarEmployee';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import PendingIcon from '@mui/icons-material/Pending';
 
 const StyledTableCell = styled(TableCell)({
   textAlign: 'center',
@@ -40,45 +48,57 @@ const StyledTableRow = styled(TableRow)({
 
 const JobApplications = () => {
   const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [companyProfileOpen, setCompanyProfileOpen] = useState(false);
   const [companyDetails, setCompanyDetails] = useState(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [applicationToCancel, setApplicationToCancel] = useState(null);
+  const [testResultOpen, setTestResultOpen] = useState(false);
+  const [selectedTestResult, setSelectedTestResult] = useState(null);
 
-  const userId = sessionStorage.getItem('userId'); // Assuming employee ID is stored here
+  const userId = sessionStorage.getItem('userId');
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/jobs/applications`, {
-          params: { userId },
+        setLoading(true);
+        const response = await axios.get(`http://localhost:3000/jobs/employee-applications`, {
+          params: { userId }
         });
-        setApplications(response.data);
+        
+        // Filter out any null or invalid applications
+        const validApplications = response.data.filter(app => 
+          app && app.jobTitle && app.companyName
+        );
+        
+        console.log('Applications fetched:', validApplications);
+        setApplications(validApplications);
+        setError('');
       } catch (error) {
+        console.error('Error fetching applications:', error);
+        setError('Failed to fetch applications');
         toast.error("Error fetching applications");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchApplications();
+
+    if (userId) {
+      fetchApplications();
+    }
   }, [userId]);
 
-  const handleViewDetails = async (jobId) => {
-    try {
-      const response = await axios.get(`http://localhost:3000/jobs/viewjob`);
-      const job = response.data.find((job) => job._id === jobId);
-      if (job) {
-        setSelectedApplication(job);
-        setOpen(true);
-      } else {
-        toast.error("Job details not found");
-      }
-    } catch (error) {
-      toast.error("Error fetching job details");
-    }
+  const handleViewDetails = (application) => {
+    setSelectedApplication(application);
+    setOpen(true);
   };
 
-  const fetchCompanyDetails = async (userId) => {
+  const fetchCompanyDetails = async (employerId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/profile/${userId}`);
+      const response = await axios.get(`http://localhost:3000/profile/${employerId}`);
       setCompanyDetails(response.data);
       setCompanyProfileOpen(true);
     } catch (error) {
@@ -96,21 +116,71 @@ const JobApplications = () => {
     setCompanyDetails(null);
   };
 
-  const handleCancelApplication = async (applicationId) => {
+  const handleCancelClick = (application) => {
+    // Additional validation before allowing cancellation
+    if (application.approvalStatus !== 'Pending') {
+      toast.warning('Cannot cancel an application that has been processed');
+      return;
+    }
+    
+    if (application.testStatus === 'Completed') {
+      toast.warning('Cannot cancel an application after completing the test');
+      return;
+    }
+
+    setApplicationToCancel(application);
+    setConfirmCancel(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!applicationToCancel) return;
+
     try {
-      const response = await axios.delete(`http://localhost:3000/jobs/deletApplication/${applicationId}`);
+      const response = await axios.delete(
+        `http://localhost:3000/jobs/cancel-application/${applicationToCancel._id}`,
+        { data: { userId } }
+      );
+
       if (response.status === 200) {
-        toast.success("Application canceled successfully");
-        setApplications(applications.filter((app) => app._id !== applicationId));
-      } else {
-        toast.error("Failed to cancel application");
+        setApplications(applications.filter(app => app._id !== applicationToCancel._id));
+        toast.success('Application cancelled successfully');
       }
     } catch (error) {
-      toast.error("Error canceling application");
+      console.error('Error cancelling application:', error);
+      toast.error(error.response?.data?.message || 'Failed to cancel application');
+    } finally {
+      setConfirmCancel(false);
+      setApplicationToCancel(null);
     }
   };
-  
-  
+
+  const handleViewTestResult = async (application) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/test/test-result/${application._id}`);
+      setSelectedTestResult(response.data);
+      setTestResultOpen(true);
+    } catch (error) {
+      console.error('Error fetching test result:', error);
+      toast.error('Failed to fetch test result');
+    }
+  };
+
+  // Function to format experience
+  const formatExperience = (experience) => {
+    if (typeof experience === 'object' && experience !== null) {
+      const { years, months } = experience;
+      return `${years} years ${months} months`;
+    }
+    return `${experience} years`;
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Container style={{ maxWidth: '100%', margin: '0 auto' }}>
@@ -119,155 +189,137 @@ const JobApplications = () => {
         My Job Applications
       </Typography>
 
-      {/* <TableContainer component={Paper} style={{ marginTop: '20px' ,width: '80%',textAlign: 'center',justifyContent: 'center',
-      alignItems: 'center',}}>
-        <Table style={{ width: '100%',marginLeft:'30',textAlign: 'center',justifyContent: 'center',
-      alignItems: 'center', }}>
-          <TableHead>
-            <TableRow>
-              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>#</StyledTableCell>
-              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Job Title</StyledTableCell>
-              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Company</StyledTableCell>
-              {/* <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Email</StyledTableCell>
-              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Applied At</StyledTableCell>
-              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Status</StyledTableCell>
-              <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Actions</StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {applications.length > 0 ? (
-              applications.map((application, index) => (
-                <StyledTableRow key={application._id}>
-                  <StyledTableCell>{index + 1}</StyledTableCell>
-                  <StyledTableCell>{application.jobTitle}</StyledTableCell>
-                  <StyledTableCell>{application.companyName}</StyledTableCell>
-                  {/* <StyledTableCell>{application.email}</StyledTableCell> 
-                  <StyledTableCell>{new Date(application.appliedAt).toLocaleDateString('en-GB')}</StyledTableCell>
-                  <StyledTableCell>{application.approvalStatus}</StyledTableCell>
-                  <StyledTableCell>
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: '10px',
-      flexWrap: 'wrap', // This ensures buttons stack when space is limited
-    }}
-  >
-    <Button
-      variant="contained"
-      color="primary"
-      onClick={() => handleViewDetails(application.jobId)}
-    >
-      View Details
-    </Button>
-    {application.approvalStatus === 'Pending' && (
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={() => handleCancelApplication(application._id)}
-      >
-        Cancel
-      </Button>
-    )}
-  </div>
-</StyledTableCell>
+      {error && (
+        <Typography color="error" align="center" sx={{ mt: 2 }}>
+          {error}
+        </Typography>
+      )}
 
-
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '40vh',
+        width: '100%',
+      }}>
+        <TableContainer
+          component={Paper}
+          style={{
+            margin: 'auto',
+            width: '80%',
+            maxWidth: '1200px',
+          }}
+        >
+          <Table style={{ width: '100%' }}>
+            <TableHead>
+              <TableRow>
+                <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>#</StyledTableCell>
+                <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Job Title</StyledTableCell>
+                <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Company</StyledTableCell>
+                <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Applied At</StyledTableCell>
+                <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Application Status</StyledTableCell>
+                <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Test Status</StyledTableCell>
+                <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Actions</StyledTableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {applications.length > 0 ? (
+                applications.map((application, index) => (
+                  <StyledTableRow key={application._id || index}>
+                    <StyledTableCell>{index + 1}</StyledTableCell>
+                    <StyledTableCell>{application.jobTitle || 'N/A'}</StyledTableCell>
+                    <StyledTableCell>{application.companyName || 'N/A'}</StyledTableCell>
+                    <StyledTableCell>
+                      {application.appliedAt ? 
+                        new Date(application.appliedAt).toLocaleDateString('en-GB') : 
+                        'N/A'
+                      }
+                    </StyledTableCell>
+                    <StyledTableCell>
+                      <Chip
+                        label={application.approvalStatus || 'Pending'}
+                        color={
+                          application.approvalStatus === 'Accepted' ? 'success' :
+                          application.approvalStatus === 'Rejected' ? 'error' :
+                          'warning'
+                        }
+                        variant="outlined"
+                        sx={{ fontWeight: 'medium' }}
+                      />
+                    </StyledTableCell>
+                    <StyledTableCell>
+                      <Box 
+                        onClick={() => application.testStatus === 'Completed' && handleViewTestResult(application)}
+                        sx={{ 
+                          cursor: application.testStatus === 'Completed' ? 'pointer' : 'default',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1
+                        }}
+                      >
+                        <Chip
+                          icon={application.testStatus === 'Completed' ? 
+                            <AssignmentTurnedInIcon /> : 
+                            <PendingIcon />
+                          }
+                          label={application.testStatus === 'Completed' ? 'View Result' : 'Pending'}
+                          color={application.testStatus === 'Completed' ? 'success' : 'warning'}
+                          variant="outlined"
+                          sx={{ 
+                            fontWeight: 'medium',
+                            '&:hover': application.testStatus === 'Completed' ? {
+                              backgroundColor: 'success.light',
+                              color: 'white'
+                            } : {}
+                          }}
+                        />
+                      </Box>
+                    </StyledTableCell>
+                    <StyledTableCell>
+                      <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: 1,
+                        flexWrap: 'wrap',
+                      }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          onClick={() => handleViewDetails(application)}
+                        >
+                          View Details
+                        </Button>
+                        {(application.approvalStatus === 'Pending' && 
+                          application.testStatus !== 'Completed') && (
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            onClick={() => handleCancelClick(application)}
+                            startIcon={<DeleteIcon />}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </Box>
+                    </StyledTableCell>
+                  </StyledTableRow>
+                ))
+              ) : (
+                <StyledTableRow>
+                  <StyledTableCell colSpan={7} style={{ textAlign: 'center' }}>
+                    No applications found.
+                  </StyledTableCell>
                 </StyledTableRow>
-              ))
-            ) : (
-              <StyledTableRow>
-                <StyledTableCell colSpan={5}>No applications found.</StyledTableCell>
-              </StyledTableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>  */}
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
 
-      {/* Dialog for Application Details */}
-
-      <div
-  style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '40vh', // Full viewport height
-    width: '100%',
-  }}
->
-  <TableContainer
-    component={Paper}
-    style={{
-      margin: 'auto', // Centers horizontally
-      width: '80%', // Adjust as needed
-      maxWidth: '1200px', // Optional: limit the table's width
-    }}
-  >
-    <Table style={{ width: '100%' }}>
-      <TableHead>
-        <TableRow>
-          <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>#</StyledTableCell>
-          <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Job Title</StyledTableCell>
-          <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Company</StyledTableCell>
-          <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Applied At</StyledTableCell>
-          <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Status</StyledTableCell>
-          <StyledTableCell style={{ backgroundColor: '#360275', color: 'white' }}>Actions</StyledTableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {applications.length > 0 ? (
-          applications.map((application, index) => (
-            <StyledTableRow key={application._id}>
-              <StyledTableCell>{index + 1}</StyledTableCell>
-              <StyledTableCell>{application.jobTitle}</StyledTableCell>
-              <StyledTableCell>{application.companyName}</StyledTableCell>
-              <StyledTableCell>
-                {new Date(application.appliedAt).toLocaleDateString('en-GB')}
-              </StyledTableCell>
-              <StyledTableCell>{application.approvalStatus}</StyledTableCell>
-              <StyledTableCell>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '10px',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleViewDetails(application.jobId)}
-                  >
-                    View Details
-                  </Button>
-                  {application.approvalStatus === 'Pending' && (
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => handleCancelApplication(application._id)}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </StyledTableCell>
-            </StyledTableRow>
-          ))
-        ) : (
-          <StyledTableRow>
-            <StyledTableCell colSpan={6} style={{ textAlign: 'center' }}>
-              No applications found.
-            </StyledTableCell>
-          </StyledTableRow>
-        )}
-      </TableBody>
-    </Table>
-  </TableContainer>
-</div>
-
+      {/* Application Details Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ backgroundColor: '#360275', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h5">Application Details</Typography>
@@ -278,7 +330,7 @@ const JobApplications = () => {
         
         <DialogContent sx={{ p: 3, backgroundColor: '#f2f2f7' }}>
           <Card sx={{ p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: 1 }}>
-            {selectedApplication ? (
+            {selectedApplication && (
               <>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', mb: 2 }}>
                   {selectedApplication.jobTitle}
@@ -287,11 +339,9 @@ const JobApplications = () => {
                 {[
                   { label: 'Company Name', value: selectedApplication.companyName },
                   { label: 'Location', value: selectedApplication.location },
-                  { label: 'Salary', value: selectedApplication.salary },
                   { label: 'Job Type', value: selectedApplication.jobType },
                   { label: 'Qualifications', value: selectedApplication.qualifications },
-                  { label: 'Skills Required', value: Array.isArray(selectedApplication.skills) ? selectedApplication.skills.join(', ') : 'N/A' },
-                  { label: 'Experience', value: `${selectedApplication.experience} years` },
+                  { label: 'Experience', value: formatExperience(selectedApplication.experience) },
                   { label: 'Contact Details', value: selectedApplication.contactDetails },
                   { label: 'Last Date to Apply', value: selectedApplication.lastDate ? new Date(selectedApplication.lastDate).toLocaleDateString('en-GB') : 'N/A' }
                 ].map((item, index) => (
@@ -303,20 +353,18 @@ const JobApplications = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => fetchCompanyDetails(selectedApplication.userId)} // Update ID/function as needed
+                  onClick={() => fetchCompanyDetails(selectedApplication.employerId)}
                   sx={{ mt: 2 }}
                 >
                   View Company Profile
                 </Button>
               </>
-            ) : (
-              <Typography variant="body1">Loading application details...</Typography>
             )}
           </Card>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for Company Profile */}
+      {/* Company Profile Dialog */}
       <Dialog open={companyProfileOpen} onClose={handleCompanyProfileClose} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ backgroundColor: '#360275', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h5">Company Profile</Typography>
@@ -346,7 +394,6 @@ const JobApplications = () => {
                   <Typography variant="body1" color="textSecondary" gutterBottom>
                     <strong>Email:</strong> {companyDetails.email}
                   </Typography>
-                  
                   <Typography variant="body1" color="textSecondary" gutterBottom>
                     <strong>Website:</strong> {companyDetails.website}
                   </Typography>
@@ -354,7 +401,7 @@ const JobApplications = () => {
                     <strong>Address:</strong> {companyDetails.address}
                   </Typography>
                   <Typography variant="body1" color="textSecondary" gutterBottom>
-                    <strong>Tagline</strong> {companyDetails.tagline}
+                    <strong>Tagline:</strong> {companyDetails.tagline}
                   </Typography>
                 </div>
               </>
@@ -364,6 +411,88 @@ const JobApplications = () => {
           </Card>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        open={confirmCancel}
+        onClose={() => setConfirmCancel(false)}
+      >
+        <DialogTitle>Cancel Application</DialogTitle>
+        <DialogContent>
+          Are you sure you want to cancel your application for {applicationToCancel?.jobTitle}?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmCancel(false)} color="primary">
+            No, Keep It
+          </Button>
+          <Button onClick={handleCancelConfirm} color="error" variant="contained">
+            Yes, Cancel Application
+          </Button>
+        </DialogActions>
+      </ConfirmDialog>
+
+      {/* Test Result Dialog */}
+      <TestResultDialog 
+        open={testResultOpen} 
+        onClose={() => setTestResultOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          bgcolor: '#360275', 
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <Typography variant="h6">Test Result</Typography>
+          <IconButton onClick={() => setTestResultOpen(false)} sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2, p: 3 }}>
+          {selectedTestResult && (
+            <Box>
+              <Card sx={{ p: 3, mb: 2 }}>
+                <Typography variant="h5" gutterBottom color="primary">
+                  Score: {selectedTestResult.score}/{selectedTestResult.totalMarks}
+                </Typography>
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                  Result: {selectedTestResult.result === 'Pass' ? 
+                    <Chip label="Pass" color="success" size="small" /> : 
+                    <Chip label="Fail" color="error" size="small" />
+                  }
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Time Taken: {selectedTestResult.timeTaken} minutes
+                </Typography>
+              </Card>
+
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Performance Analysis
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={(selectedTestResult.score / selectedTestResult.totalMarks) * 100}
+                  sx={{ 
+                    height: 10, 
+                    borderRadius: 5,
+                    mb: 1,
+                    backgroundColor: 'grey.200',
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: selectedTestResult.result === 'Pass' ? 'success.main' : 'error.main'
+                    }
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary" align="center">
+                  {Math.round((selectedTestResult.score / selectedTestResult.totalMarks) * 100)}% Score
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+      </TestResultDialog>
       <ToastContainer />
     </Container>
   );

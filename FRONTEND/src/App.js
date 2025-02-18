@@ -35,7 +35,9 @@ import TakeTest from './pages/employee/TakeTest';
 import Selection from './pages/employer/Selection';
 import TestComplete from './pages/employee/TestComplete';
 import ContactMessages from './pages/admin/ContactMessages';
-
+import JobSuggestionsPage from './pages/employee/JobSuggestionsPage';
+import PaymentManagement from './pages/admin/PaymentManagement';
+import AdminNotifications from './pages/admin/AdminNotifications';
 // Add this to your routes
 
 
@@ -52,61 +54,6 @@ const ProtectedRoute = ({ redirectPath = '/login', allowedRole }) => {
   return <Outlet />;
 };
 
-// function App() {
-//   return (
-//     <div className='App'>
-//       <Routes>
-//         {/* Public Routes */}
-//         <Route path='/' element={<HomePage />} />
-//         <Route path='/login' element={<Login />} />
-//         <Route path='/signup' element={<Signup />} />
-//         <Route path='/forgotpassword' element={<ForgotPassword />} />
-//         <Route path="/user/resetpassword/:token" element={<ResetPassword />} />
-//         <Route path='/contactus' element={<ContactUs />} />
-//         <Route path='/about' element={<AboutUs />} />
-//         <Route path='/viewjob' element={<Viewjob />} />
-//         <Route path='/navbar' element={<Navbar />} />
-//         <Route path='/footer' element={<Footer />} />
-//         <Route path='/googlelogin' element={<GoogleLoginComponent />} />
-
-//         {/* Protected Routes for Admin */}
-//         <Route element={<ProtectedRoute redirectPath="/login" allowedRole="admin" />}>
-//           <Route path='/adminpage' element={<AdminPage />} />
-//           <Route path='/adminpage1' element={<AdminApplicants />} />
-//           <Route path='/manageUsers' element={<ManageUsers />} />
-//           <Route path='/siteReport' element={<SiteReport />} />
-//           <Route path='/postedJobsAdmin' element={<PostedJobsAdmin />} />
-//           <Route path='/adminJobApproval' element={<AdminJobApproval />} />
-//           <Route path='/navbaradmin' element={<NavbarAdmin />} />
-//           <Route path='/adminJobAprooval' element={<AdminJobApproval />} />
-//         <Route path='/contactus' element={<ContactUs />} />
-//         <Route path='/about' element={<AboutUs />} />
-//         </Route>
-
-//         {/* Protected Routes for Employer */}
-//         <Route element={<ProtectedRoute redirectPath="/" allowedRole="employer" />}>
-//           <Route path='/employerpage' element={<EmployerPage />} />
-//           <Route path='/employerprofile' element={<EmployerProfile />} />
-//           <Route path='/postedJobs' element={<PostedJobs />} />
-//           <Route path='/approvedJobs' element={<ApprovedJobs />} />
-//           <Route path='/navbaremployer' element={<NavbarEmployer />} />
-//         <Route path='/contactus' element={<ContactUs />} />
-//         <Route path='/about' element={<AboutUs />} />
-//         </Route>
-
-//         {/* Protected Routes for Employee */}
-//         <Route element={<ProtectedRoute redirectPath="/" allowedRole="employee" />}>
-//           <Route path='/employeepage' element={<EmployeePage />} />
-//           <Route path='/navbaremployee' element={<NavbarEmployee />} />
-//           <Route path='/EmployeeProfile' element={<EmployeeProfile />} />
-//           <Route path='/contactus' element={<ContactUs />} />
-//           <Route path='/about' element={<AboutUs />} />
-
-//         </Route>
-//       </Routes>
-//     </div>
-//   );
-// }
 function App() {
   return (
     <div className='App'>
@@ -123,10 +70,10 @@ function App() {
         <Route path='/footer' element={<Footer />} />
         <Route path='/googlelogin' element={<GoogleLoginComponent />} />
         <Route path='/selection' element={<Selection />} />
+        <Route path='/contactus' element={<ContactUs />} />
 
         {/* Protected Routes for Common Pages */}
         <Route element={<ProtectedRoute redirectPath="/" />}>
-          <Route path='/contactus' element={<ContactUs />} />
           <Route path='/about' element={<AboutUs />} />
         </Route>
 
@@ -141,6 +88,8 @@ function App() {
           <Route path='/navbaradmin' element={<NavbarAdmin />} />
           <Route path='/adminJobAprooval' element={<AdminJobApproval />} />
           <Route path='/contact-messages' element={<ContactMessages />} />
+          <Route path='/payment-management' element={<PaymentManagement />} />
+          <Route path='/admin-notifications' element={<AdminNotifications />} />
         </Route>
 
         {/* Protected Routes for Employer */}
@@ -163,6 +112,8 @@ function App() {
           <Route path='/jobApplications' element={<JobApplications />} />
           <Route path='/take-test/:testId' element={<TakeTest/>}/>
           <Route path="/test-complete" element={<TestComplete />} />
+<Route path="/job-suggestions" element={<JobSuggestionsPage />} />
+          // ... in your routes ...
         </Route>
       </Routes>
     </div>

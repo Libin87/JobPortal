@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
+import { Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, TablePagination } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import Navbar from '../../components/Navbar';
@@ -10,6 +10,8 @@ const AdminApplicants = () => {
   const [applicants, setApplicants] = useState([]);
   const [userToken, setUserToken] = useState(sessionStorage.getItem('userToken'));
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage] = useState(7);
 
   const fetchApplicants = async () => {
     try {
@@ -51,6 +53,10 @@ const AdminApplicants = () => {
       });
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
   return (
     <div>
       <NavbarAdmin style={{ marginBottom: '20px' }} />
@@ -84,7 +90,7 @@ const AdminApplicants = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {applicants.map((applicant, index) => (
+                {applicants.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((applicant, index) => (
                   <TableRow key={applicant._id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{applicant.jobTitle}</TableCell>
@@ -116,6 +122,19 @@ const AdminApplicants = () => {
             </Table>
           )}
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={applicants.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[7]}
+          sx={{
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-select, .MuiTablePagination-selectIcon': {
+              display: 'none',
+            },
+          }}
+        />
       </Container>
     </div>
   );

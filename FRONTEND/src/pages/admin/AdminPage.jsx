@@ -9,6 +9,8 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import WorkIcon from '@mui/icons-material/Work';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import QuizIcon from '@mui/icons-material/Quiz';
+import Badge from '@mui/material/Badge';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -21,11 +23,14 @@ const AdminPage = () => {
     totalEmployers: 0,
     totalApplications: 0,
     totalTests: 0,
+    totalPayments: 0,
     applicationsByApprovalStatus: [],
     applicationsByEmployer: [],
   });
+  const [pendingJobs, setPendingJobs] = useState(0);
+  const [pendingProfiles, setPendingProfiles] = useState(0);
 
-  const COLORS = ['#360275', '#0D6EFD', '#FF8042', '#00C49F', '#8884d8'];
+  const COLORS = ['#360275', '#0D6EFD', '#FF8042', '#00C49F', '#8884d8', '#82ca9d'];
   const USER_COLORS = ['#360275', '#FF8042'];
 
   const mainData = [
@@ -33,7 +38,8 @@ const AdminPage = () => {
     { name: 'Total Jobs', value: report.totalJobs },
     { name: 'Active Jobs', value: report.activeJobs },
     { name: 'Total Applications', value: report.totalApplications },
-    { name: 'Total Tests', value: report.totalTests }
+    { name: 'Total Tests', value: report.totalTests },
+    { name: 'Total Payments', value: report.totalPayments }
   ].filter(item => item.value > 0);
 
   const userTypeData = [
@@ -51,14 +57,53 @@ const AdminPage = () => {
   useEffect(() => {
     const fetchReportData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/siteReport');
-        setReport(response.data);
+        const [reportResponse, paymentsResponse] = await Promise.all([
+          axios.get('http://localhost:3000/api/siteReport'),
+          axios.get('http://localhost:3000/api/payment/receipts')
+        ]);
+        
+        setReport({
+          ...reportResponse.data,
+          totalPayments: paymentsResponse.data.length
+        });
       } catch (err) {
         console.error('Error fetching site report data:', err);
       }
     };
     fetchReportData();
   }, []);
+
+  useEffect(() => {
+    const fetchPendingCounts = async () => {
+      try {
+        const [jobsResponse, profilesResponse] = await Promise.all([
+          axios.get('http://localhost:3000/jobs/pending'),
+          axios.get('http://localhost:3000/profile/pending-profiles')
+        ]);
+        
+        setPendingJobs(jobsResponse.data.length);
+        setPendingProfiles(profilesResponse.data.length);
+      } catch (err) {
+        console.error('Error fetching pending counts:', err);
+      }
+    };
+
+    fetchPendingCounts();
+  }, []);
+
+  const paymentManagementButton = (
+    <Grid item xs={12} sm={3} md={3}>
+      <Link to="/payment-management" id='payment-management'>
+        <Button 
+          variant="contained" 
+          fullWidth 
+          style={{ backgroundColor: '#82ca9d' }}
+        >
+          Payment Management
+        </Button>
+      </Link>
+    </Grid>
+  );
 
   return (
     <div>
@@ -109,11 +154,30 @@ const AdminPage = () => {
           </Grid>
           <Grid item xs={12} sm={3} md={3}>
             <Link to="/adminJobAprooval" id='approval'>
-              <Button variant="contained" fullWidth style={{ backgroundColor: '#00CCCD' }}>
+              <Button 
+                variant="contained" 
+                fullWidth 
+                style={{ backgroundColor: '#00CCCD' }}
+                startIcon={
+                  <Badge 
+                    badgeContent={pendingJobs + pendingProfiles} 
+                    color="error"
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        right: -3,
+                        top: 3,
+                      }
+                    }}
+                  >
+                    <NotificationsIcon />
+                  </Badge>
+                }
+              >
                 Notifications
               </Button>
             </Link>
           </Grid>
+          {paymentManagementButton}
         </Grid>
       </Container>
 
@@ -244,7 +308,7 @@ const AdminPage = () => {
                   p: 3, 
                   borderRadius: '15px',
                   background: 'white',
-                  height: '400px',
+                  height: '430px',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                 }}
               >
@@ -266,7 +330,11 @@ const AdminPage = () => {
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      wrapperStyle={{ paddingTop: '30px' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </Paper>
@@ -279,14 +347,14 @@ const AdminPage = () => {
                   p: 3, 
                   borderRadius: '15px',
                   background: 'white',
-                  height: '400px',
+                  height: '430px',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                 }}
               >
                 <Typography variant="h5" sx={{ mb: 3, color: '#360275', fontWeight: 'bold' }}>
                   User Distribution
                 </Typography>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={330}>
                   <BarChart data={userTypeData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />

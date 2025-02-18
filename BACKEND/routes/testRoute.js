@@ -499,4 +499,152 @@ router.put('/update-test/:testId', async (req, res) => {
 
 // ... rest of existing code ...
 
+// Add this new route to get all test results for an employer
+router.get('/employer-test-results/:employerId', async (req, res) => {
+  try {
+    const { employerId } = req.params;
+
+    // Aggregate test results with job and candidate details
+    const results = await TestResult.aggregate([
+      {
+        $lookup: {
+          from: 'jobs',
+          localField: 'jobId',
+          foreignField: '_id',
+          as: 'jobDetails'
+        }
+      },
+      {
+        $unwind: '$jobDetails'
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'employeeId',
+          foreignField: '_id',
+          as: 'candidateDetails'
+        }
+      },
+      {
+        $unwind: '$candidateDetails'
+      },
+      {
+        $match: {
+          'jobDetails.userId': new mongoose.Types.ObjectId(employerId)
+        }
+      },
+      {
+        $project: {
+          jobId: 1,
+          jobTitle: '$jobDetails.jobTitle',
+          candidateName: '$candidateDetails.name',
+          score: 1,
+          totalMarks: 1,
+          result: 1,
+          timeTaken: 1,
+          submittedAt: 1
+        }
+      },
+      {
+        $sort: {
+          jobId: 1,
+          score: -1,
+          timeTaken: 1
+        }
+      }
+    ]);
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching test results:', error);
+    res.status(500).json({ 
+      message: 'Error fetching test results', 
+      error: error.message 
+    });
+  }
+});
+
+// Add this route to get test result for an application
+router.get('/test-result/:applicationId', async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    
+    const application = await Application.findById(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    const testResult = await TestResult.findOne({
+      employeeId: application.userId,
+      jobId: application.jobId
+    });
+
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+
+    res.json({
+      score: testResult.score,
+      totalMarks: testResult.totalMarks,
+      result: testResult.result,
+      timeTaken: testResult.timeTaken,
+      submittedAt: testResult.submittedAt
+    });
+
+  } catch (error) {
+    console.error('Error fetching test result:', error);
+    res.status(500).json({ 
+      message: 'Error fetching test result',
+      error: error.message 
+    });
+  }
+});
+
+// Add this route to get pending tests for an employee
+router.get('/pending-tests/:employeeId', async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    // Get all applications for this employee that require tests
+    const applications = await Application.find({
+      userId: employeeId,
+      testStatus: 'Pending'
+    }).populate('jobId');
+
+    if (!applications.length) {
+      return res.json([]);
+    }
+
+    // Get all tests for these applications
+    const tests = await Test.find({
+      jobId: { $in: applications.map(app => app.jobId._id) }
+    });
+
+    // Format test data with job details
+    const formattedTests = tests.map(test => {
+      const application = applications.find(
+        app => app.jobId._id.toString() === test.jobId.toString()
+      );
+      
+      return {
+        _id: test._id,
+        testName: test.testName,
+        jobTitle: application?.jobId.jobTitle,
+        companyName: application?.jobId.companyName,
+        duration: test.duration,
+        totalMarks: test.totalMarks,
+        jobId: test.jobId
+      };
+    });
+
+    res.json(formattedTests);
+  } catch (error) {
+    console.error('Error fetching pending tests:', error);
+    res.status(500).json({ 
+      message: 'Error fetching pending tests',
+      error: error.message 
+    });
+  }
+});
+
 module.exports = router;

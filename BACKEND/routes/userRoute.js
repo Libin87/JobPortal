@@ -1,168 +1,13 @@
-
-// const express = require('express');
-// const router = express.Router();
-
-// router.use(express.json());
-// router.use(express.urlencoded({ extended: true }));
-// const userData = require('../model/userData');
-// const authController = require('../controller/forgotResetController');
-
-// router.post('/login', async (req, res) => {
-//     let email = req.body.email;
-//     let password = req.body.password;
-
-//     try {
-//         const user = await userData.findOne({ email: email });
-        
-//         if (!user) {
-//             return res.json({ message: "User not found" });
-//         }
-
-//         if (user.password !== password) {
-//             return res.json({ message: "Password is wrong" });
-//         } else {
-//             return res.json({ message: "Login successfully!!", role: user.role,_id: user._id,name:user.name });
-//         }
-//     } catch (error) {
-//         console.log(error);
-//         return res.json({ message: "Error logging in" });
-//     }
-// });
-
-
-// router.post('/signup', async (req, res) => {
-//     try {
-//         console.log(req.body);
-//         const { email, phone } = req.body;
-
-//         // Check if the email or phone already exists
-//         const existingEmail = await userData.findOne({ email });
-//         const existingPhone = await userData.findOne({ phone });
-
-//         if (existingEmail) {
-//             return res.status(400).json({ message: 'Email already exists' });
-//         }
-
-//         if (existingPhone) {
-//             return res.status(400).json({ message: 'Phone number already exists' });
-//         }
-
-//         const newUser = new userData(req.body);
-//         await newUser.save();
-//         res.json({ message: 'Registered successfully' });
-//     } catch (error) {
-//         res.status(500).json('Unable to post');
-//         console.log(error);
-//     }
-// });
-
-// router.post('/forgotpassword', authController.forgotPassword);
-// router.post('/resetpassword/:token', authController.resetPassword);
-
-// module.exports = router;
-
-
-// const express = require('express');
-// const router = express.Router();
-// const userData = require('../model/userData');
-// const authController = require('../controller/forgotResetController');
-// const bcrypt = require('bcrypt');
-
-// router.post('/login', async (req, res) => {
-//     const { email, password } = req.body;
-
-//     try {
-//         const user = await userData.findOne({ email });
-//         if (!user) {
-//             return res.json(404).json({ message: "User not found" });
-//         }
-
-//         const isMatch = await bcrypt.compare(password, user.password);
-//         if (!isMatch) {
-//             return res.json(400).json({ message: "Invalid credentials" });
-//         }
-
-//         res.status(200).json({ message: "Login successfully!!", role: user.role, name: user.name, _id: user._id });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Error logging in" });
-//     }
-// });
-
-// router.post('/signup', async (req, res) => {
-//     const { name, email, phone, password, role } = req.body;
-
-//     try {
-//         const hashedPassword = await bcrypt.hash(password, 10);
-//         const newUser = new userData({ name, email, phone, password: hashedPassword, role });
-
-//         await newUser.save();
-//         res.status(201).json({ message: "Registered successfully" });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Error signing up" });
-//     }
-// });
-
-// router.post('/forgotpassword', authController.forgotPassword);
-// router.post('/resetpassword/:token', authController.resetPassword);
-
-// module.exports = router;
-
-
-// const express = require('express');
-// const router = express.Router();
-// const userData = require('../model/userData');
-// const authController = require('../controller/forgotResetController');
-// const bcrypt = require('bcrypt');
-
-// router.post('/login', async (req, res) => {
-//     const { email, password } = req.body;
-
-//     try {
-//         const user = await userData.findOne({ email });
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
-
-//         const isMatch = await bcrypt.compare(password, user.password);
-//         if (!isMatch) {
-//             return res.status(400).json({ message: "Invalid credentials" });
-//         }
-
-//         res.status(200).json({ message: "Login successfully!!", role: user.role, name: user.name, _id: user._id });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Error logging in" });
-//     }
-// });
-
-// router.post('/signup', async (req, res) => {
-//     const { name, email, phone, password, role } = req.body;
-
-//     try {
-//         const hashedPassword = await bcrypt.hash(password, 10);
-//         const newUser = new userData({ name, email, phone, password: hashedPassword, role });
-
-//         await newUser.save();
-//         res.status(201).json({ message: "Registered successfully" });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Error signing up" });
-//     }
-// });
-
-// router.post('/forgotpassword', authController.forgotPassword);
-// router.post('/resetpassword/:token', authController.resetPassword);
-
-// module.exports = router;
-
-
 const express = require('express');
 const router = express.Router();
 const userData = require('../model/userData');
 const authController = require('../controller/forgotResetController');
 const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
+const User = require('../model/Guser');
+const Profile = require('../model/profile');
+const Job = require('../model/job');
+const Application = require('../model/applicationModel');
 
 // Login Route
 router.post('/login', async (req, res) => {
@@ -172,6 +17,19 @@ router.post('/login', async (req, res) => {
         const user = await userData.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if user is suspended
+        if (user.accountStatus === 'suspended') {
+            // Get the latest suspension notification
+            const suspensionNotification = user.notifications
+                ?.filter(n => n.type === 'suspension')
+                .sort((a, b) => b.createdAt - a.createdAt)[0];
+
+            return res.status(403).json({ 
+                isSuspended: true,
+                message: suspensionNotification?.message || "Your account has been suspended. Please contact admin for support.",
+            });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -309,8 +167,6 @@ router.get('/checkPhoneNumber', async (req, res) => {
 //google
 
 
-const User = require('../model/Guser');
-
 // Route to handle Google Sign-In data
 router.post('/google-signin', async (req, res) => {
     const { name, email, role, googleId } = req.body;
@@ -339,6 +195,140 @@ router.post('/google-signin', async (req, res) => {
     }
 });
 
+// Update the status update route
+router.put('/users/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, reason } = req.body;
 
+        // Create the notification object
+        const notification = {
+            message: status === 'suspended' 
+                ? `Your account has been suspended. Reason: ${reason || 'Violation of terms'}`
+                : 'Your account has been reactivated.',
+            type: status === 'suspended' ? 'suspension' : 'activation',
+            createdAt: new Date(),
+            read: false
+        };
+
+        // Update user with new status and add notification
+        const updatedUser = await userData.findByIdAndUpdate(
+            id,
+            {
+                $set: { accountStatus: status },
+                $push: { notifications: notification }
+            },
+            { 
+                new: true,
+                runValidators: true 
+            }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ 
+            message: `User ${status === 'active' ? 'activated' : 'suspended'} successfully`,
+            user: updatedUser 
+        });
+    } catch (error) {
+        console.error('Error updating user status:', error);
+        res.status(500).json({ 
+            message: 'Error updating user status',
+            error: error.message 
+        });
+    }
+});
+
+// Add this route to handle user status updates
+router.put('/status/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status, message } = req.body;
+
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Update user status
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { 
+          $set: { 
+            accountStatus: status,
+            statusMessage: message || ''
+          }
+        },
+        { new: true, session }
+      );
+
+      if (!updatedUser) {
+        throw new Error('User not found');
+      }
+
+      // If user is an employer and being suspended, update related data
+      if (updatedUser.role === 'employer' && status === 'suspended') {
+        // Update employer profile
+        await Profile.findOneAndUpdate(
+          { userId: userId },
+          {
+            $set: {
+              verificationStatus: 'suspended',
+              verificationMessage: message || 'Account suspended by admin'
+            }
+          },
+          { session }
+        );
+
+        // Update all jobs by this employer
+        await Job.updateMany(
+          { userId: userId },
+          { 
+            $set: { 
+              status: 'suspended',
+              verificationMessage: 'Employer account suspended'
+            }
+          },
+          { session }
+        );
+
+        // Update all applications for jobs by this employer
+        const employerJobs = await Job.find({ userId: userId }, null, { session });
+        if (employerJobs.length > 0) {
+          const jobIds = employerJobs.map(job => job._id);
+          await Application.updateMany(
+            { jobId: { $in: jobIds } },
+            { 
+              $set: { 
+                approvalStatus: 'suspended',
+                statusMessage: 'Job suspended due to employer account suspension'
+              }
+            },
+            { session }
+          );
+        }
+      }
+
+      await session.commitTransaction();
+      res.json({
+        message: `User ${status} successfully`,
+        user: updatedUser
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    res.status(500).json({ 
+      message: 'Error updating user status',
+      error: error.message 
+    });
+  }
+});
 
 module.exports = router;

@@ -1,231 +1,11 @@
-
-// const express = require('express');
-// const multer = require('multer');
-// const Profile = require('../model/profile');
-// const router = express.Router();
-
-// // Multer config for file uploads
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, 'uploads/');
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, `${Date.now()}_${file.originalname}`);
-//   },
-// });
-
-// const upload = multer({ storage });
-
-// // Fetch existing profile
-// router.get('/', async (req, res) => {
-//   try {
-//     const profile = await Profile.findOne();
-//     res.json(profile);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error fetching profile', error });
-//   }
-// });
-
-// // Create or update profile
-// router.post('/create', upload.single('logo'), async (req, res) => {
-//   try {
-//     const logoUrl = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : null;
-//     const profileData = { ...req.body, logoUrl };
-
-//     const newProfile = new Profile(profileData);
-//     await newProfile.save();
-//     res.status(201).json(newProfile);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error creating profile', error });
-//   }
-// });
-
-// router.post('/update', upload.single('logo'), async (req, res) => {
-//   try {
-//     const logoUrl = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : null;
-//     const updatedData = { ...req.body, logoUrl };
-
-//     const updatedProfile = await Profile.findOneAndUpdate({}, updatedData, { new: true });
-//     res.json(updatedProfile);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error updating profile', error });
-//   }
-// });
-
-// module.exports = router;
-
-// const express = require('express');
-// const multer = require('multer');
-// const Profile = require('../model/profile');
-// const router = express.Router();
-
-// // Multer config for file uploads
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, 'uploads/');
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, `${Date.now()}_${file.originalname}`);
-//   },
-// });
-
-// const upload = multer({ storage });
-
-// // Fetch profile by userId
-// router.get('/:userId', async (req, res) => {
-//   try {
-//     const { userId } = req.params;
-//     const profile = await Profile.findOne({ userId });
-//     if (!profile) {
-//       return res.status(404).json({ message: 'Profile not found' });
-//     }
-//     res.json(profile);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error fetching profile', error });
-//   }
-// });
-
-// // Create profile for a user
-// router.post('/create', upload.single('logoUrl'), async (req, res) => {
-//   try {
-//     const { userId,cname, email, address, tagline, website } = req.body;
-//     const logoUrl = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : null;
-
-//     // Check if profile already exists for this userId
-//     const existingProfile = await Profile.findOne({ userId });
-//     if (existingProfile) {
-//       return res.status(400).json({ message: 'Profile already exists for this user' });
-//     }
-
-//     const profileData = { userId,cname, email, address, tagline, website, logoUrl };
-//     const newProfile = new Profile(profileData);
-//     await newProfile.save();
-//     res.status(201).json(newProfile);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error creating profile', error });
-//   }
-// });
-
-// // Update profile by userId
-// router.post('/update/:userId', upload.single('logoUrl'), async (req, res) => {
-//   try {
-//     const { userId,cname,email, address, tagline, website } = req.body;
-//     const logoUrl = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : null;
-
-//     // Prepare the fields for updating
-//     const updatedData = { cname,email, address, tagline, website };
-//     if (logoUrl) updatedData.logoUrl = logoUrl;
-
-//     // Find and update the profile based on userId
-//     const updatedProfile = await Profile.findOneAndUpdate(
-//       { userId },
-//       updatedData,
-//       { new: true }
-//     );
-
-//     if (!updatedProfile) {
-//       return res.status(404).json({ message: 'Profile not found' });
-//     }
-
-//     res.json(updatedProfile);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error updating profile', error });
-//   }
-// });
-
-// module.exports = router;
-
-
-// routes/profileRoute.js
-
-
-// const express = require('express');
-// const multer = require('multer');
-// const Profile = require('../model/profile');
-// const router = express.Router();
-
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, 'uploads/');
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, `${Date.now()}_${file.originalname}`);
-//   },
-// });
-
-// const upload = multer({ storage });
-// router.post('/create', upload.single('logoUrl'), async (req, res) => {
-//   const { userId, cname, email, address, tagline, website } = req.body;
-//   try {
-//     const profile = new Profile({
-//       userId,
-//       cname,
-//       email,
-//       address,
-//       tagline,
-//       website,
-//       logoUrl: req.file ? req.file.path : ''
-//     });
-//     await profile.save();
-//     res.status(201).json({ message: 'Profile created successfully', profile });
-//   } catch (error) {
-//     console.error('Error creating profile:', error);
-//     res.status(500).json({ error: 'Error creating profile' });
-//   }
-// });
-
-// // Update Profile
-// router.post('/update/:userId', upload.single('logoUrl'), async (req, res) => {
-//   const { userId } = req.params;
-//   const { cname, email, address, tagline, website } = req.body;
-//   try {
-//     const updateData = {
-//       cname,
-//       email,
-//       address,
-//       tagline,
-//       website
-//     };
-
-//     // Include logo only if a new one was uploaded
-//     if (req.file) {
-//       updateData.logoUrl = req.file.path;
-//     }
-
-//     const updatedProfile = await Profile.findOneAndUpdate({ userId }, updateData, { new: true });
-//     if (!updatedProfile) {
-//       return res.status(404).json({ error: 'Profile not found' });
-//     }
-//     res.status(200).json({ message: 'Profile updated successfully', updatedProfile });
-//   } catch (error) {
-//     console.error('Error updating profile:', error);
-//     res.status(500).json({ error: 'Error updating profile' });
-//   }
-// });
-
-// // Get Profile by User ID
-// router.get('/:userId', async (req, res) => {
-//   const { userId } = req.params;
-//   try {
-//     const profile = await Profile.findOne({ userId });
-//     if (!profile) {
-//       return res.status(404).json({ error: 'Profile not found' });
-//     }
-//     res.status(200).json(profile);
-//   } catch (error) {
-//     console.error('Error fetching profile:', error);
-//     res.status(500).json({ error: 'Error fetching profile' });
-//   }
-// });
-
-// module.exports = router;
-
-
 const express = require('express');
 const multer = require('multer');
 const Profile = require('../model/profile');
 const router = express.Router();
 const path = require('path');
+const mongoose = require('mongoose');
+const Job = require('../model/job');
+const Application = require('../model/applicationModel');
 
 // Set static folder
 router.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
@@ -239,56 +19,244 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === 'logoUrl') {
+      if (!file.mimetype.startsWith('image/')) {
+        return cb(new Error('Please upload an image file for logo'));
+      }
+    } else if (file.fieldname === 'documentUrl') {
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.mimetype)) {
+        return cb(new Error('Please upload a valid document file (PDF, DOC, DOCX)'));
+      }
+    }
+    cb(null, true);
+  }
+});
 
-router.post('/create', upload.single('logoUrl'), async (req, res) => {
-  const { userId, cname, email, address, tagline, website } = req.body;
+// 1. First, place all specific routes
+// Pending profiles route
+router.get('/pending-profiles', async (req, res) => {
   try {
-    const profile = new Profile({
+    const profiles = await Profile.find({
+      verificationStatus: { $in: ['Pending', 'Rejected'] }
+    }).select('cname email website documentUrl verificationStatus verificationMessage')
+      .sort({ createdAt: -1 });
+    res.json(profiles);
+  } catch (error) {
+    console.error('Error fetching pending profiles:', error);
+    res.status(500).json({ error: 'Error fetching pending profiles' });
+  }
+});
+
+// File serving route
+router.get('/file/:filename', (req, res) => {
+  const { filename } = req.params;
+  res.sendFile(path.join(__dirname, '..', 'uploads', filename));
+});
+
+// Company name route
+router.get('/company/:userId', async (req, res) => {
+  try {
+    const company = await Profile.findOne({ userId: req.params.userId });
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+    res.json({ companyName: company.cname });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Logo route
+router.get('/logo/:userId', async (req, res) => {
+  try {
+    const company = await Profile.findOne({ userId: req.params.userId });
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+    res.json({ logoUrl: company.logoUrl });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Verify profile route
+router.put('/verify/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, message } = req.body;
+
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Update profile
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            verificationStatus: status,
+            verificationMessage: message || ''
+          }
+        },
+        { new: true, session }
+      );
+
+      if (!updatedProfile) {
+        throw new Error('Profile not found');
+      }
+
+      // If the profile is suspended/rejected, update all associated jobs and applications
+      if (status === 'suspended' || status === 'Rejected') {
+        // Update all jobs by this employer
+        await Job.updateMany(
+          { userId: updatedProfile.userId },
+          { 
+            $set: { 
+              status: 'suspended',
+              verificationMessage: `Employer account ${status.toLowerCase()}`
+            }
+          },
+          { session }
+        );
+
+        // Update all applications for jobs by this employer
+        const employerJobs = await Job.find({ userId: updatedProfile.userId }, null, { session });
+        if (employerJobs.length > 0) {
+          const jobIds = employerJobs.map(job => job._id);
+          await Application.updateMany(
+            { jobId: { $in: jobIds } },
+            { 
+              $set: { 
+                approvalStatus: 'suspended',
+                statusMessage: `Job suspended due to employer account ${status.toLowerCase()}`
+              }
+            },
+            { session }
+          );
+        }
+      }
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      res.json({
+        message: `Profile ${status.toLowerCase()} successfully`,
+        profile: updatedProfile
+      });
+    } catch (error) {
+      // If there's an error, abort the transaction
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error('Error updating verification status:', error);
+    res.status(500).json({ 
+      message: 'Error updating verification status',
+      error: error.message 
+    });
+  }
+});
+
+// Add this route to get all profiles
+router.get('/all-profiles', async (req, res) => {
+  try {
+    const profiles = await Profile.find({}, 'userId verificationStatus');
+    res.json(profiles);
+  } catch (error) {
+    console.error('Error fetching all profiles:', error);
+    res.status(500).json({ error: 'Error fetching profiles' });
+  }
+});
+
+// 2. Then place the CRUD routes
+// Create profile
+router.post('/create', upload.fields([
+  { name: 'logoUrl', maxCount: 1 },
+  { name: 'documentUrl', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { userId, cname, email, address, tagline, website } = req.body;
+    
+    // Create profile object with verification status
+    const profileData = {
       userId,
       cname,
       email,
       address,
       tagline,
       website,
-      logoUrl: req.file ? `uploads/${req.file.filename}` : ''
+      verificationStatus: 'Pending', // Set initial status
+      logoUrl: req.files?.logoUrl ? `uploads/${req.files.logoUrl[0].filename}` : '',
+      documentUrl: req.files?.documentUrl ? `uploads/${req.files.documentUrl[0].filename}` : ''
+    };
+
+    const profile = new Profile(profileData);
+    const savedProfile = await profile.save();
+    
+    res.status(201).json({ 
+      message: 'Profile created successfully', 
+      profile: savedProfile 
     });
-    await profile.save();
-    res.status(201).json({ message: 'Profile created successfully', profile });
   } catch (error) {
     console.error('Error creating profile:', error);
     res.status(500).json({ error: 'Error creating profile' });
   }
 });
 
-// Update Profile
-router.post('/update/:userId', upload.single('logoUrl'), async (req, res) => {
-  const { userId } = req.params;
-  const { cname, email, address, tagline, website } = req.body;
+// Update profile
+router.post('/update/:userId', upload.fields([
+  { name: 'logoUrl', maxCount: 1 },
+  { name: 'documentUrl', maxCount: 1 }
+]), async (req, res) => {
   try {
-    const updateData = { cname, email, address, tagline, website };
+    const { userId } = req.params;
+    const { cname, email, address, tagline, website } = req.body;
 
-    // Include logo only if a new one was uploaded
-    if (req.file) {
-      updateData.logoUrl = `uploads/${req.file.filename}`;
+    const updateData = { 
+      cname, 
+      email, 
+      address, 
+      tagline, 
+      website 
+    };
+
+    if (req.files?.logoUrl) {
+      updateData.logoUrl = `uploads/${req.files.logoUrl[0].filename}`;
     }
 
-    const updatedProfile = await Profile.findOneAndUpdate({ userId }, updateData, { new: true });
+    if (req.files?.documentUrl) {
+      updateData.documentUrl = `uploads/${req.files.documentUrl[0].filename}`;
+    }
+
+    const updatedProfile = await Profile.findOneAndUpdate(
+      { userId }, 
+      updateData, 
+      { new: true }
+    );
+
     if (!updatedProfile) {
       return res.status(404).json({ error: 'Profile not found' });
     }
-    res.status(200).json({ message: 'Profile updated successfully', updatedProfile });
+
+    res.status(200).json({ 
+      message: 'Profile updated successfully', 
+      updatedProfile 
+    });
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ error: 'Error updating profile' });
   }
 });
 
-// Get Profile by User ID
+// 3. Finally, place the generic route
 router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
   try {
-    const profile = await Profile.findOne({ userId });
+    const profile = await Profile.findOne({ userId: req.params.userId });
     if (!profile) {
       return res.status(404).json({ error: 'Profile not found' });
     }
@@ -299,30 +267,56 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
-// fetch company name
-router.get('/company/:userId', async (req, res) => {
-  const userId = req.params.userId;
+// Add this route for deleting profiles
+router.delete('/:profileId', async (req, res) => {
   try {
-    const company = await Profile.findOne({ userId });
-    if (!company) return res.status(404).json({ error: 'Company not found' });
-    res.json({ companyName: company.cname });
+    const { profileId } = req.params;
+    const deletedProfile = await Profile.findByIdAndDelete(profileId);
+    
+    if (!deletedProfile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    res.json({ message: 'Profile deleted successfully' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-router.get('/logo/:userId', async (req, res) => {
-  const userId = req.params.userId;
-  try {
-    const company = await Profile.findOne({ userId });
-    if (!company) return res.status(404).json({ error: 'Company not found' });
-    res.json({ logoUrl: company.logoUrl });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error deleting profile:', error);
+    res.status(500).json({ error: 'Error deleting profile' });
   }
 });
 
+// Add this route to update employer profile status
+router.put('/employer-status/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status, message } = req.body;
+
+    const updatedProfile = await Profile.findOneAndUpdate(
+      { userId: userId },
+      {
+        $set: {
+          verificationStatus: status,
+          verificationMessage: message
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedProfile) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    res.json({
+      message: 'Profile status updated successfully',
+      profile: updatedProfile
+    });
+  } catch (error) {
+    console.error('Error updating profile status:', error);
+    res.status(500).json({ 
+      message: 'Error updating profile status',
+      error: error.message 
+    });
+  }
+});
 
 module.exports = router;
 

@@ -16,6 +16,7 @@ import NavbarAdmin from './admin/NavbarAdmin';
 import NavbarEmployee from './employee/NavbarEmployee';
 import NavbarEmployer from './employer/NavbarEmployer';
 import Footer from '../components/Footer';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 const ContactUs = () => {
   const [userRole, setUserRole] = useState(sessionStorage.getItem('role'));
@@ -30,6 +31,7 @@ const ContactUs = () => {
     severity: 'success'
   });
   const [errors, setErrors] = useState({});
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const renderNavbar = () => {
     switch (userRole) {
@@ -64,7 +66,23 @@ const ContactUs = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await axios.post('http://localhost:3000/contact/submit-message', formData);
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('message', formData.message);
+      if (selectedFile) {
+        formDataToSend.append('document', selectedFile);
+      }
+
+      const response = await axios.post(
+        'http://localhost:3000/contact/submit-message', 
+        formDataToSend,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       
       setAlert({
         open: true,
@@ -78,6 +96,7 @@ const ContactUs = () => {
         email: '',
         message: ''
       });
+      setSelectedFile(null);
     } catch (error) {
       setAlert({
         open: true,
@@ -99,6 +118,12 @@ const ContactUs = () => {
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
     }
   };
 
@@ -146,6 +171,29 @@ const ContactUs = () => {
                   helperText={errors.message}
                   sx={{ mb: 3 }}
                 />
+                <Box sx={{ mb: 3 }}>
+                  <input
+                    accept="image/*,.pdf,.doc,.docx"
+                    style={{ display: 'none' }}
+                    id="contained-button-file"
+                    type="file"
+                    onChange={handleFileChange}
+                  />
+                  <label htmlFor="contained-button-file">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      startIcon={<CloudUploadIcon />}
+                      sx={{ 
+                        color: '#360275',
+                        borderColor: '#360275',
+                        '&:hover': { borderColor: '#2A0163' }
+                      }}
+                    >
+                      {selectedFile ? selectedFile.name : 'Upload Document (Optional)'}
+                    </Button>
+                  </label>
+                </Box>
                 <Button 
                   type="submit"
                   variant="contained"

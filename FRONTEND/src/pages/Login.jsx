@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +7,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import CircularProgress from '@mui/material/CircularProgress';
 import { auth, googleProvider } from '../pages/firebaseConfig';
 import { signInWithPopup } from 'firebase/auth';
+import SuspensionNotice from '../components/SuspensionNotice';
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -21,6 +21,8 @@ const LoginForm = () => {
 
   const [input, setInput] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [showSuspensionDialog, setShowSuspensionDialog] = useState(false);
+  const [suspensionMessage, setSuspensionMessage] = useState('');
 
   const inputHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -37,7 +39,6 @@ const LoginForm = () => {
     const adminPassword = 'admin123';
 
     if (input.email === adminEmail && input.password === adminPassword) {
-      // alert('Admin Login successfully!!');
       sessionStorage.setItem('role', 'admin');
       sessionStorage.setItem('name', 'Admin');
       sessionStorage.setItem('userId', 'adminId');
@@ -46,23 +47,22 @@ const LoginForm = () => {
     } else {
       axios.post('http://localhost:3000/user/login', input)
         .then((response) => {
-          console.log(response.data);
           setLoading(false);
           if (response.data.message === 'Login successfully!!') {
-            alert(response.data.message);
             sessionStorage.setItem('role', response.data.role);
             sessionStorage.setItem('name', response.data.name);
             sessionStorage.setItem('userId', response.data._id);
             sessionStorage.setItem('email', response.data.email);
             sessionStorage.setItem('phone', response.data.phone);
             navigate('/', { replace: true });
-          } else {
-            alert(response.data.message);
           }
         })
         .catch((err) => {
           setLoading(false);
-          if (err.response && err.response.data && err.response.data.message) {
+          if (err.response?.data?.isSuspended) {
+            setSuspensionMessage(err.response.data.message);
+            setShowSuspensionDialog(true);
+          } else if (err.response?.data?.message) {
             alert(err.response.data.message);
           } else {
             console.error("An unexpected error occurred:", err);
@@ -181,6 +181,11 @@ const LoginForm = () => {
           )}
         </div>
       </div>
+      <SuspensionNotice 
+        message={suspensionMessage}
+        open={showSuspensionDialog}
+        onClose={() => setShowSuspensionDialog(false)}
+      />
     </div>
   );
 };

@@ -22,6 +22,8 @@ import {
   Snackbar
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
+import DescriptionIcon from '@mui/icons-material/Description';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import NavbarAdmin from './NavbarAdmin';
 import Footer from '../../components/Footer';
 import moment from 'moment';
@@ -85,6 +87,13 @@ const ContactMessages = () => {
     }
   };
 
+  const handleViewDocument = (documentUrl) => {
+    if (documentUrl) {
+      const fullUrl = `http://localhost:3000${documentUrl}`;
+      window.open(fullUrl, '_blank');
+    }
+  };
+
   return (
     <>
       <NavbarAdmin />
@@ -103,6 +112,7 @@ const ContactMessages = () => {
                 <TableCell><strong>Name</strong></TableCell>
                 <TableCell><strong>Email</strong></TableCell>
                 <TableCell><strong>Message</strong></TableCell>
+                <TableCell><strong>Document</strong></TableCell>
                 <TableCell><strong>Status</strong></TableCell>
                 <TableCell><strong>Action</strong></TableCell>
               </TableRow>
@@ -117,9 +127,34 @@ const ContactMessages = () => {
                   <TableCell>{message.email}</TableCell>
                   <TableCell>{message.message}</TableCell>
                   <TableCell>
+                    {message.documentUrl ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<DescriptionIcon />}
+                        endIcon={<OpenInNewIcon />}
+                        onClick={() => handleViewDocument(message.documentUrl)}
+                        sx={{
+                          borderColor: '#360275',
+                          color: '#360275',
+                          '&:hover': {
+                            borderColor: '#2A0163',
+                            backgroundColor: 'rgba(54, 2, 117, 0.04)'
+                          }
+                        }}
+                      >
+                        View Document
+                      </Button>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No document
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Chip 
                       label={message.status}
-                      color={message.status === 'Pending' ? 'warning' : 'success'}
+                      color={message.status === 'new' ? 'warning' : 'success'}
                       size="small"
                     />
                   </TableCell>
@@ -129,7 +164,8 @@ const ContactMessages = () => {
                       color="primary"
                       startIcon={<EmailIcon />}
                       onClick={() => handleRespond(message)}
-                      disabled={message.status === 'Responded'}
+                      disabled={message.status === 'responded'}
+                      sx={{ mr: 1 }}
                     >
                       Respond
                     </Button>
@@ -140,7 +176,6 @@ const ContactMessages = () => {
           </Table>
         </TableContainer>
 
-        {/* Response Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>
             Respond to {selectedMessage?.name}
@@ -151,6 +186,31 @@ const ContactMessages = () => {
                 Original Message:
               </Typography>
               <Typography>{selectedMessage?.message}</Typography>
+              
+              {selectedMessage?.documentUrl && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" color="textSecondary">
+                    Attached Document:
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<DescriptionIcon />}
+                    onClick={() => handleViewDocument(selectedMessage.documentUrl)}
+                    sx={{
+                      mt: 1,
+                      borderColor: '#360275',
+                      color: '#360275',
+                      '&:hover': {
+                        borderColor: '#2A0163',
+                        backgroundColor: 'rgba(54, 2, 117, 0.04)'
+                      }
+                    }}
+                  >
+                    View Document
+                  </Button>
+                </Box>
+              )}
             </Box>
             <TextField
               fullWidth
@@ -174,7 +234,6 @@ const ContactMessages = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Alert Snackbar */}
         <Snackbar
           open={alert.open}
           autoHideDuration={6000}

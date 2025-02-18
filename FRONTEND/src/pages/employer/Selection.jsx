@@ -12,8 +12,17 @@ import {
   DialogContent,
   DialogActions,
   Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import NavbarEmployer from './NavbarEmployer';
 import axios from 'axios';
 import { styled } from '@mui/material/styles';
@@ -21,6 +30,8 @@ import { motion } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MenuItem } from "@mui/material";
+import moment from 'moment';
+
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
@@ -43,7 +54,6 @@ const GradientButton = styled(Button)(({ theme }) => ({
   margin: theme.spacing(1),
 }));
 
-
 const Selection = () => {
   const [testDetails, setTestDetails] = useState({
     testName: '',
@@ -61,6 +71,10 @@ const Selection = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const difficultyLevels = ['Easy', 'Intermediate', 'Advanced', 'Expert'];
   const [jobsWithTests, setJobsWithTests] = useState([]);
+  const [activeTab, setActiveTab] = useState(0);
+  const [employerTests, setEmployerTests] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [editTestId, setEditTestId] = useState(null);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -103,6 +117,20 @@ const Selection = () => {
       }
     };
     fetchJobsAndTests();
+
+    // Add this to fetch employer's tests
+    const fetchEmployerTests = async () => {
+      try {
+        const userId = sessionStorage.getItem('userId');
+        const response = await axios.get(`http://localhost:3000/test/employer-tests/${userId}`);
+        setEmployerTests(response.data);
+      } catch (error) {
+        console.error('Error fetching employer tests:', error);
+        toast.error('Error fetching your tests');
+      }
+    };
+
+    fetchEmployerTests();
   }, []);
 
   const handleTestDetailsChange = (e) => {
@@ -287,28 +315,98 @@ const Selection = () => {
 
       console.log('Sending test data:', testData); // Debug log
 
-      const response = await axios.post('http://localhost:3000/test/createTest', testData);
-      console.log('Server response:', response.data); // Debug log
-
-      if (response.data) {
+      let response;
+      if (editMode) {
+        response = await axios.put(`http://localhost:3000/test/update-test/${editTestId}`, testData);
+        toast.success('Test updated successfully!');
+      } else {
+        response = await axios.post('http://localhost:3000/test/createTest', testData);
         toast.success('Test created successfully!');
-        setOpenDialog(true);
-        // Reset form
-        setTestDetails({
-          testName: '',
-          duration: '',
-          totalMarks: '',
-          passingMarks: '',
-          jobId: '',
-          numberOfQuestions: '',
-          difficultyLevel: ''
-        });
-        setQuestions([]);
       }
+
+      // Reset form and state
+      setTestDetails({
+        testName: '',
+        duration: '',
+        totalMarks: '',
+        passingMarks: '',
+        jobId: '',
+        numberOfQuestions: '',
+        difficultyLevel: ''
+      });
+      setQuestions([]);
+      setEditMode(false);
+      setEditTestId(null);
+      setActiveTab(0); // Switch back to tests list
+
+      // Refresh employer tests
+      const userId = sessionStorage.getItem('userId');
+      const updatedTests = await axios.get(`http://localhost:3000/test/employer-tests/${userId}`);
+      setEmployerTests(updatedTests.data);
     } catch (error) {
       console.error('Error details:', error.response?.data || error); // Enhanced error logging
-      toast.error(error.response?.data?.message || 'Error creating test. Please check console for details.');
+      toast.error(error.response?.data?.message || 'Error saving test');
     }
+  };
+
+  const handleDeleteTest = async (testId) => {
+    if (window.confirm('Are you sure you want to delete this test?')) {
+      try {
+        await axios.delete(`http://localhost:3000/test/delete-test/${testId}`);
+        setEmployerTests(prev => prev.filter(test => test._id !== testId));
+        toast.success('Test deleted successfully');
+      } catch (error) {
+        console.error('Error deleting test:', error);
+        toast.error('Error deleting test');
+      }
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+  const handleEditTest = async (testId) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/test/get-test/${testId}`);
+      const test = response.data;
+      
+      setTestDetails({
+        testName: test.testName,
+        duration: test.duration,
+        totalMarks: test.totalMarks,
+        passingMarks: test.passingMarks,
+        jobId: test.jobId,
+        numberOfQuestions: test.numberOfQuestions,
+        difficultyLevel: test.difficultyLevel || ''
+      });
+      
+      setQuestions(test.questions || []);
+      setEditMode(true);
+      setEditTestId(testId);
+      setActiveTab(1); // Switch to create/edit tab
+    } catch (error) {
+      console.error('Error fetching test details:', error);
+      toast.error(error.response?.data?.message || 'Error loading test details');
+    }
+  };
+
+  const submitButtonText = editMode ? 'Update Test' : 'Create Test';
+
+  const handleCancelEdit = () => {
+    setTestDetails({
+      testName: '',
+      duration: '',
+      totalMarks: '',
+      passingMarks: '',
+      jobId: '',
+      numberOfQuestions: '',
+      difficultyLevel: ''
+    });
+    setQuestions([]);
+    setEditMode(false);
+    setEditTestId(null);
+    setActiveTab(0);
   };
 
   return (
@@ -322,167 +420,232 @@ const Selection = () => {
           transition={{ duration: 0.5 }}
         >
           <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
-            Create Selection Test
+            Test Management
           </Typography>
 
-          <StyledPaper>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Test Name"
-                  name="testName"
-                  value={testDetails.testName}
-                  onChange={handleTestDetailsChange}
-                  onBlur={handleTestDetailsBlur}
-                  error={!!errors.testName}
-                  helperText={errors.testName}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Duration (minutes)"
-                  name="duration"
-                  type="number"
-                  value={testDetails.duration}
-                  onChange={handleTestDetailsChange}
-                  onBlur={handleTestDetailsBlur}
-                  error={!!errors.duration}
-                  helperText={errors.duration}
-                  inputProps={{ min: 10, max: 180 }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Total Marks"
-                  name="totalMarks"
-                  type="number"
-                  value={testDetails.totalMarks}
-                  onChange={handleTestDetailsChange}
-                  onBlur={handleTestDetailsBlur}
-                  error={!!errors.totalMarks}
-                  helperText={errors.totalMarks}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Passing Marks"
-                  name="passingMarks"
-                  type="number"
-                  value={testDetails.passingMarks}
-                  onChange={handleTestDetailsChange}
-                  onBlur={handleTestDetailsBlur}
-                  error={!!errors.passingMarks}
-                  helperText={errors.passingMarks}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Number of Questions"
-                  name="numberOfQuestions"
-                  type="number"
-                  value={testDetails.numberOfQuestions}
-                  onChange={handleTestDetailsChange}
-                  onBlur={handleTestDetailsBlur}
-                  error={!!errors.numberOfQuestions}
-                  helperText={errors.numberOfQuestions}
-                  inputProps={{ min: 1 }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-  <TextField
-    select
-    fullWidth
-    label="Difficulty Level"
-    name="difficultyLevel"
-    value={testDetails.difficultyLevel}
-    onChange={handleTestDetailsChange}
-    error={!!errors.difficultyLevel}
-    helperText={errors.difficultyLevel}
-  >
-    {difficultyLevels.map((level) => (
-      <MenuItem key={level} value={level}>
-        {level}
-      </MenuItem>
-    ))}
-  </TextField>
-</Grid>
+          <Tabs value={activeTab} onChange={handleTabChange} centered sx={{ mb: 4 }}>
+            <Tab label="My Tests" />
+            <Tab label="Create New Test" />
+          </Tabs>
 
-<Grid item xs={12}>
-        <TextField
-          select
-          fullWidth
-          label="Associated Job"
-          name="jobId"
-          value={testDetails.jobId}
-          onChange={handleTestDetailsChange}
-          error={!!errors.jobId}
-          helperText={errors.jobId}
-          onBlur={handleTestDetailsBlur}
-        >
-          <MenuItem value="">None</MenuItem>
-          {availableJobs.map((job) => (
-            <MenuItem 
-              key={job._id} 
-              value={job._id}
-              disabled={job.hasTest} // Disable jobs that already have tests
-            >
-              {job.jobTitle} {job.hasTest ? '(Test Already Created)' : ''}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Grid>
-              <Grid item xs={12}>
-                <GradientButton
-                  fullWidth
-                  onClick={() => {
-                    if (validateInitialDetails()) {
-                      fetchAndSetQuestions();
-                    }
-                  }}
-                >
-                  Generate Questions
-                </GradientButton>
-              </Grid>
-            </Grid>
-          </StyledPaper>
-
-          {questions.length > 0 && (
-            <>
-              {questions.map((question, index) => (
-                <StyledPaper key={index}>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle1">
-                        Question {index + 1} (Marks: {question.marks})
-                      </Typography>
-                      <Typography variant="body1">{question.question}</Typography>
-                    </Grid>
-                    {question.options.map((option, optIndex) => (
-                      <Grid item xs={12} sm={6} key={optIndex}>
-                        <Typography>
-                          Option {optIndex + 1}: {option}
-                        </Typography>
-                      </Grid>
+          {activeTab === 0 && (
+            <StyledPaper>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Test Name</TableCell>
+                      <TableCell>Job Title</TableCell>
+                      <TableCell>Duration (min)</TableCell>
+                      <TableCell>Questions</TableCell>
+                      <TableCell>Created On</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {employerTests.map((test) => (
+                      <TableRow key={test._id}>
+                        <TableCell>{test.testName}</TableCell>
+                        <TableCell>{test.jobTitle}</TableCell>
+                        <TableCell>{test.duration}</TableCell>
+                        <TableCell>{test.numberOfQuestions}</TableCell>
+                        <TableCell>
+                          {moment(test.createdAt).format('DD MMM YYYY')}
+                        </TableCell>
+                        <TableCell>
+                          <IconButton 
+                            onClick={() => handleEditTest(test._id)}
+                            color="primary"
+                            sx={{ mr: 1 }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton 
+                            onClick={() => handleDeleteTest(test._id)}
+                            color="error"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                    <Grid item xs={12}>
-                      <Typography color="primary">
-                        Correct Answer: Option {question.correctAnswer}
-                      </Typography>
-                    </Grid>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </StyledPaper>
+          )}
+
+          {activeTab === 1 && (
+            <div>
+              <StyledPaper>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Test Name"
+                      name="testName"
+                      value={testDetails.testName}
+                      onChange={handleTestDetailsChange}
+                      onBlur={handleTestDetailsBlur}
+                      error={!!errors.testName}
+                      helperText={errors.testName}
+                    />
                   </Grid>
-                </StyledPaper>
-              ))}
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <GradientButton onClick={handleSubmit}>
-                  Create Test
-                </GradientButton>
-              </Box>
-            </>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Duration (minutes)"
+                      name="duration"
+                      type="number"
+                      value={testDetails.duration}
+                      onChange={handleTestDetailsChange}
+                      onBlur={handleTestDetailsBlur}
+                      error={!!errors.duration}
+                      helperText={errors.duration}
+                      inputProps={{ min: 10, max: 180 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Total Marks"
+                      name="totalMarks"
+                      type="number"
+                      value={testDetails.totalMarks}
+                      onChange={handleTestDetailsChange}
+                      onBlur={handleTestDetailsBlur}
+                      error={!!errors.totalMarks}
+                      helperText={errors.totalMarks}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Passing Marks"
+                      name="passingMarks"
+                      type="number"
+                      value={testDetails.passingMarks}
+                      onChange={handleTestDetailsChange}
+                      onBlur={handleTestDetailsBlur}
+                      error={!!errors.passingMarks}
+                      helperText={errors.passingMarks}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Number of Questions"
+                      name="numberOfQuestions"
+                      type="number"
+                      value={testDetails.numberOfQuestions}
+                      onChange={handleTestDetailsChange}
+                      onBlur={handleTestDetailsBlur}
+                      error={!!errors.numberOfQuestions}
+                      helperText={errors.numberOfQuestions}
+                      inputProps={{ min: 1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Difficulty Level"
+                      name="difficultyLevel"
+                      value={testDetails.difficultyLevel}
+                      onChange={handleTestDetailsChange}
+                      error={!!errors.difficultyLevel}
+                      helperText={errors.difficultyLevel}
+                    >
+                      {difficultyLevels.map((level) => (
+                        <MenuItem key={level} value={level}>
+                          {level}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Associated Job"
+                      name="jobId"
+                      value={testDetails.jobId}
+                      onChange={handleTestDetailsChange}
+                      error={!!errors.jobId}
+                      helperText={errors.jobId}
+                      onBlur={handleTestDetailsBlur}
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {availableJobs.map((job) => (
+                        <MenuItem 
+                          key={job._id} 
+                          value={job._id}
+                          disabled={job.hasTest} // Disable jobs that already have tests
+                        >
+                          {job.jobTitle} {job.hasTest ? '(Test Already Created)' : ''}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <GradientButton
+                      fullWidth
+                      onClick={() => {
+                        if (validateInitialDetails()) {
+                          fetchAndSetQuestions();
+                        }
+                      }}
+                    >
+                      Generate Questions
+                    </GradientButton>
+                  </Grid>
+                </Grid>
+              </StyledPaper>
+
+              {questions.length > 0 && (
+                <>
+                  {questions.map((question, index) => (
+                    <StyledPaper key={index}>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle1">
+                            Question {index + 1} (Marks: {question.marks})
+                          </Typography>
+                          <Typography variant="body1">{question.question}</Typography>
+                        </Grid>
+                        {question.options.map((option, optIndex) => (
+                          <Grid item xs={12} sm={6} key={optIndex}>
+                            <Typography>
+                              Option {optIndex + 1}: {option}
+                            </Typography>
+                          </Grid>
+                        ))}
+                        <Grid item xs={12}>
+                          <Typography color="primary">
+                            Correct Answer: Option {question.correctAnswer}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </StyledPaper>
+                  ))}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, gap: 2 }}>
+                    <GradientButton onClick={handleSubmit}>
+                      {submitButtonText}
+                    </GradientButton>
+                    {editMode && (
+                      <Button 
+                        variant="outlined" 
+                        color="secondary" 
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel Edit
+                      </Button>
+                    )}
+                  </Box>
+                </>
+              )}
+            </div>
           )}
         </motion.div>
       </Container>
@@ -491,5 +654,3 @@ const Selection = () => {
 };
 
 export default Selection;
-
-//create test copy

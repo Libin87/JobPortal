@@ -20,6 +20,17 @@ import {
   TableRow,
   Tabs,
   Tab,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,6 +42,9 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MenuItem } from "@mui/material";
 import moment from 'moment';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import ProfileWarning from '../../components/ProfileWarning';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -75,6 +89,10 @@ const Selection = () => {
   const [employerTests, setEmployerTests] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [editTestId, setEditTestId] = useState(null);
+  const [testResults, setTestResults] = useState({});
+  const [selectedJobResults, setSelectedJobResults] = useState(null);
+  const [verificationStatus, setVerificationStatus] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -131,7 +149,58 @@ const Selection = () => {
     };
 
     fetchEmployerTests();
-  }, []);
+
+    // Add this to fetch test results
+    const fetchTestResults = async () => {
+      try {
+        const userId = sessionStorage.getItem('userId');
+        const response = await axios.get(`http://localhost:3000/test/employer-test-results/${userId}`);
+        
+        // Group results by jobId
+        const groupedResults = response.data.reduce((acc, result) => {
+          if (!acc[result.jobId]) {
+            acc[result.jobId] = {
+              jobTitle: result.jobTitle,
+              results: []
+            };
+          }
+          acc[result.jobId].results.push(result);
+          return acc;
+        }, {});
+
+        // Sort results by score for each job
+        Object.keys(groupedResults).forEach(jobId => {
+          groupedResults[jobId].results.sort((a, b) => b.score - a.score);
+        });
+
+        setTestResults(groupedResults);
+      } catch (error) {
+        console.error('Error fetching test results:', error);
+        toast.error('Error loading test results');
+      }
+    };
+
+    if (activeTab === 2) { // Load when Test Results tab is active
+      fetchTestResults();
+    }
+
+    const checkProfile = async () => {
+      try {
+        const userId = sessionStorage.getItem('userId');
+        const response = await axios.get(`http://localhost:3000/profile/${userId}`);
+        
+        if (response.data) {
+          setVerificationStatus(response.data.verificationStatus);
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkProfile();
+  }, [activeTab]); // Add activeTab as dependency
 
   const handleTestDetailsChange = (e) => {
     const { name, value } = e.target;
@@ -409,6 +478,33 @@ const Selection = () => {
     setActiveTab(0);
   };
 
+  // Add this function to get rank colors
+  const getRankColor = (index) => {
+    switch (index) {
+      case 0: return '#FFD700'; // Gold
+      case 1: return '#C0C0C0'; // Silver
+      case 2: return '#CD7F32'; // Bronze
+      default: return '#000000'; // Black
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (verificationStatus !== 'Verified') {
+    return (
+      <>
+        <NavbarEmployer />
+        <ProfileWarning />
+      </>
+    );
+  }
+
   return (
     <>
       <NavbarEmployer />
@@ -426,6 +522,7 @@ const Selection = () => {
           <Tabs value={activeTab} onChange={handleTabChange} centered sx={{ mb: 4 }}>
             <Tab label="My Tests" />
             <Tab label="Create New Test" />
+            <Tab label="Test Results" />
           </Tabs>
 
           {activeTab === 0 && (
@@ -646,6 +743,99 @@ const Selection = () => {
                 </>
               )}
             </div>
+          )}
+
+          {activeTab === 2 && (
+            <StyledPaper>
+              <Typography variant="h6" gutterBottom>
+                Test Results by Job
+              </Typography>
+              
+              {Object.entries(testResults).length > 0 ? (
+                Object.entries(testResults).map(([jobId, data]) => (
+                  <Accordion 
+                    key={jobId}
+                    expanded={selectedJobResults === jobId}
+                    onChange={() => setSelectedJobResults(selectedJobResults === jobId ? null : jobId)}
+                    sx={{ mb: 2 }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                        {data.jobTitle}
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Card>
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>
+                            Rank List
+                          </Typography>
+                          <List>
+                            {data.results.map((result, index) => (
+                              <React.Fragment key={result._id}>
+                                <ListItem
+                                  sx={{
+                                    backgroundColor: index < 3 ? `${getRankColor(index)}22` : 'transparent',
+                                    borderRadius: '4px',
+                                    mb: 1
+                                  }}
+                                >
+                                  <Grid container alignItems="center" spacing={2}>
+                                    <Grid item xs={1}>
+                                      {index < 3 && (
+                                        <EmojiEventsIcon 
+                                          sx={{ 
+                                            color: getRankColor(index),
+                                            fontSize: '24px'
+                                          }} 
+                                        />
+                                      )}
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                      <ListItemText 
+                                        primary={result.candidateName}
+                                        secondary={`Rank: ${index + 1}`}
+                                      />
+                                    </Grid>
+                                    <Grid item xs={2}>
+                                      <Typography variant="body2">
+                                        Score: {result.score}/{result.totalMarks}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={2}>
+                                      <Typography variant="body2">
+                                        Percentage: {((result.score/result.totalMarks) * 100).toFixed(2)}%
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={2}>
+                                      <Typography variant="body2">
+                                        Time Taken: {result.timeTaken} mins
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={2}>
+                                      <Chip 
+                                        label={result.result ? 'PASS' : 'FAIL'}
+                                        color={result.result ? 'success' : 'error'}
+                                        size="small"
+                                      />
+                                    </Grid>
+                                  </Grid>
+                                </ListItem>
+                                <Divider />
+                              </React.Fragment>
+                            ))}
+                          </List>
+                        </CardContent>
+                      </Card>
+                    </AccordionDetails>
+                  </Accordion>
+                ))
+              ) : (
+                <Typography variant="body1" sx={{ textAlign: 'center', py: 3 }}>
+                  No test results available
+                </Typography>
+              )}
+            </StyledPaper>
           )}
         </motion.div>
       </Container>

@@ -24,7 +24,7 @@ import {
   YAxis,
   CartesianGrid
 } from 'recharts';
-import NavbarAdmin from '../admin/NavbarAdmin';
+import NavbarAdmin from './NavbarAdmin';
 import Footer from '../../components/Footer';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import WorkIcon from '@mui/icons-material/Work';
