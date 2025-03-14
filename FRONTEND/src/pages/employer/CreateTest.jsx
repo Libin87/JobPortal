@@ -76,7 +76,8 @@ const Selection = () => {
     passingMarks: '',
     jobId: '',
     numberOfQuestions: '',
-    difficultyLevel: ''
+    difficultyLevel: '',
+    lastDate: ''
   });
 
   const [questions, setQuestions] = useState([]);
@@ -200,7 +201,25 @@ const Selection = () => {
     };
 
     checkProfile();
-  }, [activeTab]); // Add activeTab as dependency
+
+    const checkExpiredTests = async () => {
+      try {
+        await axios.put('http://localhost:3000/test/check-expired-tests');
+        // Optionally refresh the tests list after checking
+        fetchEmployerTests();
+      } catch (error) {
+        console.error('Error checking expired tests:', error);
+      }
+    };
+
+    // Check when component mounts
+    checkExpiredTests();
+
+    // Set up interval to check periodically (e.g., every hour)
+    const interval = setInterval(checkExpiredTests, 3600000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTestDetailsChange = (e) => {
     const { name, value } = e.target;
@@ -274,6 +293,25 @@ const Selection = () => {
     return '';
   };
   
+  const validateLastDate = (value) => {
+    if (!value) return 'Last date is required';
+    
+    const selectedDate = new Date(value);
+    const today = new Date();
+    const twoMonthsFromNow = new Date();
+    twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+    
+    if (selectedDate < today) {
+      return 'Last date cannot be in the past';
+    }
+    
+    if (selectedDate > twoMonthsFromNow) {
+      return 'Last date cannot be more than 2 months from today';
+    }
+    
+    return '';
+  };
+
   const handleTestDetailsBlur = (e) => {
     const { name, value } = e.target;
     let error = '';
@@ -296,6 +334,9 @@ const Selection = () => {
         break;
       case 'jobId':
         error = validateJobId(value);
+        break;
+      case 'lastDate':
+        error = validateLastDate(value);
         break;
     }
 
@@ -350,6 +391,7 @@ const Selection = () => {
     if (!testDetails.numberOfQuestions) newErrors.numberOfQuestions = 'Number of questions is required';
     if (!testDetails.difficultyLevel) newErrors.difficultyLevel = 'Difficulty level is required';
     if (!testDetails.jobId) newErrors.jobId = 'Job is required';
+    if (!testDetails.lastDate) newErrors.lastDate = 'Last date is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -358,8 +400,17 @@ const Selection = () => {
   const handleSubmit = async () => {
     try {
       // Validation
-      if (!testDetails.testName || !testDetails.duration || !testDetails.totalMarks || !testDetails.passingMarks) {
+      if (!testDetails.testName || !testDetails.duration || !testDetails.totalMarks || 
+          !testDetails.passingMarks || !testDetails.lastDate) {
         toast.error('Please fill in all test details');
+        return;
+      }
+
+      // Validate last date
+      const lastDate = new Date(testDetails.lastDate);
+      const today = new Date();
+      if (lastDate < today) {
+        toast.error('Last date cannot be in the past');
         return;
       }
 
@@ -379,7 +430,8 @@ const Selection = () => {
         passingMarks: Number(testDetails.passingMarks),
         numberOfQuestions: Number(testDetails.numberOfQuestions),
         questions,
-        employerId: sessionStorage.getItem('userId')
+        employerId: sessionStorage.getItem('userId'),
+        lastDate: testDetails.lastDate
       };
 
       console.log('Sending test data:', testData); // Debug log
@@ -401,7 +453,8 @@ const Selection = () => {
         passingMarks: '',
         jobId: '',
         numberOfQuestions: '',
-        difficultyLevel: ''
+        difficultyLevel: '',
+        lastDate: ''
       });
       setQuestions([]);
       setEditMode(false);
@@ -440,6 +493,10 @@ const Selection = () => {
       const response = await axios.get(`http://localhost:3000/test/get-test/${testId}`);
       const test = response.data;
       
+      // Add console logs to debug
+      console.log('Received test data:', test);
+      console.log('Difficulty level from backend:', test.difficultyLevel);
+      
       setTestDetails({
         testName: test.testName,
         duration: test.duration,
@@ -447,7 +504,15 @@ const Selection = () => {
         passingMarks: test.passingMarks,
         jobId: test.jobId,
         numberOfQuestions: test.numberOfQuestions,
-        difficultyLevel: test.difficultyLevel || ''
+        difficultyLevel: test.difficultyLevel,
+        lastDate: moment(test.lastDate).format('YYYY-MM-DD')
+      });
+      
+      // Add console log after setting state
+      console.log('Set test details:', {
+        testName: test.testName,
+        difficultyLevel: test.difficultyLevel,
+        // ... other fields for debugging
       });
       
       setQuestions(test.questions || []);
@@ -470,7 +535,8 @@ const Selection = () => {
       passingMarks: '',
       jobId: '',
       numberOfQuestions: '',
-      difficultyLevel: ''
+      difficultyLevel: '',
+      lastDate: ''
     });
     setQuestions([]);
     setEditMode(false);
@@ -535,6 +601,8 @@ const Selection = () => {
                       <TableCell>Job Title</TableCell>
                       <TableCell>Duration (min)</TableCell>
                       <TableCell>Questions</TableCell>
+                      <TableCell>Last Date</TableCell>
+                      <TableCell>Status</TableCell>
                       <TableCell>Created On</TableCell>
                       <TableCell>Actions</TableCell>
                     </TableRow>
@@ -547,6 +615,21 @@ const Selection = () => {
                         <TableCell>{test.duration}</TableCell>
                         <TableCell>{test.numberOfQuestions}</TableCell>
                         <TableCell>
+                          {moment(test.lastDate).format('DD MMM YYYY')}
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={test.testStatus}
+                            color={
+                              test.testStatus === 'Expired' ? 'error' : 
+                              test.testStatus === 'Completed' ? 'success' : 
+                              test.testStatus === 'Active' ? 'success' : 
+                              'warning'
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
                           {moment(test.createdAt).format('DD MMM YYYY')}
                         </TableCell>
                         <TableCell>
@@ -554,6 +637,7 @@ const Selection = () => {
                             onClick={() => handleEditTest(test._id)}
                             color="primary"
                             sx={{ mr: 1 }}
+                            disabled={test.testStatus === 'Expired'}
                           >
                             <EditIcon />
                           </IconButton>
@@ -648,7 +732,7 @@ const Selection = () => {
                       fullWidth
                       label="Difficulty Level"
                       name="difficultyLevel"
-                      value={testDetails.difficultyLevel}
+                      value={testDetails.difficultyLevel || ''}
                       onChange={handleTestDetailsChange}
                       error={!!errors.difficultyLevel}
                       helperText={errors.difficultyLevel}
@@ -684,6 +768,26 @@ const Selection = () => {
                         </MenuItem>
                       ))}
                     </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Last Date to Attend"
+                      name="lastDate"
+                      type="date"
+                      value={testDetails.lastDate}
+                      onChange={handleTestDetailsChange}
+                      onBlur={handleTestDetailsBlur}
+                      error={!!errors.lastDate}
+                      helperText={errors.lastDate}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      inputProps={{
+                        min: new Date().toISOString().split('T')[0],
+                        max: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString().split('T')[0]
+                      }}
+                    />
                   </Grid>
                   <Grid item xs={12}>
                     <GradientButton

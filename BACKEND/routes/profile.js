@@ -173,6 +173,26 @@ router.get('/all-profiles', async (req, res) => {
   }
 });
 
+// Add this route to get pending verifications
+router.get('/pending-verifications', async (req, res) => {
+  try {
+    // Count pending job approvals
+    const pendingJobs = await Job.countDocuments({ approvalStatus: 'Pending' });
+    
+    // Count pending employer verifications
+    const pendingEmployers = await Profile.countDocuments({ verificationStatus: 'Pending' });
+
+    res.json({
+      pendingJobs,
+      pendingEmployers,
+      total: pendingJobs + pendingEmployers
+    });
+  } catch (error) {
+    console.error('Error fetching pending verifications:', error);
+    res.status(500).json({ message: 'Error fetching pending verifications' });
+  }
+});
+
 // 2. Then place the CRUD routes
 // Create profile
 router.post('/create', upload.fields([

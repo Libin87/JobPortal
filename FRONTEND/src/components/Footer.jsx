@@ -22,6 +22,7 @@ const Footer = () => {
             <h5 style={styles.heading}>Company</h5>
             <ul style={styles.list}>
               <li><a href="/about" style={styles.link}>About Us</a></li>
+              <li><a href="/contactus" style={styles.link}>Contact Us</a></li>
             </ul>
           </div>
           <div className="col-md-4">

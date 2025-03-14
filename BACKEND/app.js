@@ -4,6 +4,15 @@ const morgan = require('morgan');
 const cors = require('cors');
 require('dotenv').config();
 require('./db/connection'); 
+
+// Register models first
+require('./model/job');  // Import Job model first
+require('./model/applicationModel');
+require('./model/testModel');
+require('./model/testResultModel');
+require('./model/EmployeeProfile');
+
+// Then import routes
 const siteReportRoute = require('./routes/siteReport');
 const jobRoutes = require('./routes/jobs');
 const profileRoute = require('./routes/EmpProfileRoute'); // Import the route
@@ -13,6 +22,7 @@ const employeeRoutes = require('./routes/employee');
 const app = express();
 const path = require('path');
 const fs = require('fs');
+const jobMatcherRoute = require('./routes/jobMatcherRoute');
 
 app.use(morgan('dev'));  // Log requests
 app.use(cors()); 
@@ -31,6 +41,7 @@ app.use('/questionBank', require('./routes/questionBankRoute'));
 app.use('/contact', contactRoute);
 app.use('/employee', employeeRoutes);
 app.use('/notifications', require('./routes/notificationRoutes'));
+app.use('/job-matcher', jobMatcherRoute);
 
 // Make sure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads', 'documents');
@@ -42,4 +53,12 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on PORT ${PORT}`);
 });
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+module.exports = app;
 

@@ -1,656 +1,648 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Container,
   Grid,
-  TextField,
   Button,
-  Typography,
-  Paper,
-  IconButton,
+  TextField,
+  FormControl, InputLabel, Select, MenuItem, FormHelperText,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tabs,
-  Tab,
+  DialogContent,
+  DialogContentText,
+  DialogTitle, Autocomplete,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import { Link, useNavigate } from 'react-router-dom';
 import NavbarEmployer from './NavbarEmployer';
-import axios from 'axios';
-import { styled } from '@mui/material/styles';
-import { motion } from 'framer-motion';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { MenuItem } from "@mui/material";
-import moment from 'moment';
+import Footer from '../../components/Footer';
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  borderRadius: '15px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-  transition: 'transform 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-  },
-}));
-
-const GradientButton = styled(Button)(({ theme }) => ({
-  background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-  border: 0,
-  borderRadius: 3,
-  boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
-  color: 'white',
-  height: 48,
-  padding: '0 30px',
-  margin: theme.spacing(1),
-}));
-
-const Selection = () => {
-  const [testDetails, setTestDetails] = useState({
-    testName: '',
-    duration: '',
-    totalMarks: '',
-    passingMarks: '',
-    jobId: '',
-    numberOfQuestions: '',
-    difficultyLevel: ''
+const EmployerPage = () => {
+  const [formData, setFormData] = useState({
+    jobTitle: '',
+    location: '',
+    salary: '',
+    jobType: '',
+    qualifications: '',
+    skills: '',
+    jobDescription: '',
+    experience: '',
+    contactDetails: '',
+    lastDate: '',
   });
 
-  const [questions, setQuestions] = useState([]);
-  const [availableJobs, setAvailableJobs] = useState([]);
-  const [errors, setErrors] = useState({});
-  const [openDialog, setOpenDialog] = useState(false);
-  const difficultyLevels = ['Easy', 'Intermediate', 'Advanced', 'Expert'];
-  const [jobsWithTests, setJobsWithTests] = useState([]);
-  const [activeTab, setActiveTab] = useState(0);
-  const [employerTests, setEmployerTests] = useState([]);
-  const [editMode, setEditMode] = useState(false);
-  const [editTestId, setEditTestId] = useState(null);
+  const [error, setError] = useState({});
+  const [openPopup, setOpenPopup] = useState(false);
+  const navigate = useNavigate();
+
+  const [jobTypeOptions] = useState([
+    'frontend-developer', 'ui-designer', 'backend-developer', 'fullstack-developer', 
+    'project-manager', 'data-scientist', 'product-designer', 'devops-engineer', 
+    'qa-engineer', 'marketing-specialist', 'hr-manager', 'content-writer'
+  ]);
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const userId = sessionStorage.getItem('userId');
-        console.log('UserId:', userId); // Debugging
-        const response = await axios.get(`http://localhost:3000/jobs/myjobs1?userId=${userId}`);
-        console.log('Fetched Jobs:', response.data); // Debugging
+    const role = sessionStorage.getItem('role');
+    if (!role || role !== 'employer') {
+      navigate('/login');
+    } else {
+      // Fetch company name and logo from backend
+      const fetchCompanyData = async () => {
+        try {
+          const userId = sessionStorage.getItem('userId');
 
-        setAvailableJobs(response.data);
-        console.log('Available Jobs:', availableJobs);
+          // Fetch company name
+          const nameResponse = await axios.get(`http://localhost:3000/profile/company/${userId}`);
+          sessionStorage.setItem('cname', nameResponse.data.companyName);
+          
 
-      } catch (error) {
-        console.error('Error fetching jobs:', error);
-      }
-    };
-    fetchJobs();
-    const fetchJobsAndTests = async () => {
-      try {
-        const userId = sessionStorage.getItem('userId');
-        const jobsResponse = await axios.get(`http://localhost:3000/jobs/myjobs1?userId=${userId}`);
-        const jobs = jobsResponse.data;
+          // Fetch company logo
+          const logoResponse = await axios.get(`http://localhost:3000/profile/logo/${userId}`);
+          const logoUrl = logoResponse.data.logoUrl;
+          sessionStorage.setItem('logo', logoResponse.data.logoUrl);
 
-        // Fetch existing tests for these jobs
-        const testsPromises = jobs.map(job => 
-          axios.get(`http://localhost:3000/test/check-test/${job._id}`)
-            .catch(err => ({ data: null }))
-        );
-        
-        const testsResponses = await Promise.all(testsPromises);
-        const jobsWithExistingTests = jobs.map((job, index) => ({
-          ...job,
-          hasTest: !!testsResponses[index].data
-        }));
 
-        setAvailableJobs(jobsWithExistingTests);
-      } catch (error) {
-        console.error('Error fetching jobs:', error);
-        toast.error('Error fetching jobs');
-      }
-    };
-    fetchJobsAndTests();
+          // Store logoUrl in a variable or in state if needed
+          console.log('Company Logo URL:', logoUrl);
 
-    // Add this to fetch employer's tests
-    const fetchEmployerTests = async () => {
-      try {
-        const userId = sessionStorage.getItem('userId');
-        const response = await axios.get(`http://localhost:3000/test/employer-tests/${userId}`);
-        setEmployerTests(response.data);
-      } catch (error) {
-        console.error('Error fetching employer tests:', error);
-        toast.error('Error fetching your tests');
-      }
-    };
-
-    fetchEmployerTests();
-  }, []);
-
-  const handleTestDetailsChange = (e) => {
-    const { name, value } = e.target;
-    
-    if (name === 'jobId') {
-      const selectedJob = availableJobs.find(job => job._id === value);
-      if (selectedJob?.hasTest) {
-        toast.error('This job already has an associated test. Each job can have only one test.');
-        return;
-      }
-    }
-
-    setTestDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  const validateTestName = (value) => {
-    if (!value) return 'Test name is required';
-  
-    if (!/^[a-zA-Z\s]{1,100}[0-9]{0,2}$/.test(value)) {
-      return 'Enter a valid TestName';
-    } else if (/(.)\1{3,}/.test(value)) {
-      return 'Enter a valid TestName';
-    }
-  
-    if (value.length > 25) {
-      return 'Test name cannot exceed 25 characters';
-    }
-  
-    return '';
-  };
-  
-
-  const validateDuration = (value) => {
-    const duration = Number(value);
-    if (duration < 10 || duration > 180) {
-      return 'Duration must be between 10 and 180 minutes';
-    }
-    return '';
-  };
-
-  const validateTotalMarks = (value) => {
-    const marks = Number(value);
-    if (marks < 10 || marks > 180) {
-      return 'Total marks must be between 10 and 180';
-    }
-    return '';
-  };
-
-  const validatePassingMarks = (value, totalMarks) => {
-    if (!value) return 'Passing marks is required';
-    const passingMarks = Number(value);
-    const minimumPassingMarks = Math.ceil(Number(totalMarks) * 0.25);
-    if (passingMarks < minimumPassingMarks) {
-      return `Passing marks should be at least ${minimumPassingMarks} (25% of total marks)`;
-    }
-    if (passingMarks > totalMarks) {
-      return 'Passing marks cannot exceed total marks';
-    }
-    return '';
-  };
-  const validateNumberOfQuestions = (value) => {
-    if (!value) return 'Number of questions is required';
-    if (value < 5) return 'Minimum 5 questions required';
-    if (value > 25) return 'Maximum 25 questions allowed';
-    return '';
-  };
-  const validateJobId = (value) => {
-    if (!value) return 'Selecting a job is required';
-    return '';
-  };
-  
-  const handleTestDetailsBlur = (e) => {
-    const { name, value } = e.target;
-    let error = '';
-
-    switch (name) {
-      case 'testName':
-        error = validateTestName(value);
-        break;
-      case 'duration':
-        error = validateDuration(value);
-        break;
-      case 'totalMarks':
-        error = validateTotalMarks(value);
-        break;
-      case 'passingMarks':
-        error = validatePassingMarks(value, testDetails.totalMarks);
-        break;
-      case 'numberOfQuestions':
-        error = validateNumberOfQuestions(value);
-        break;
-      case 'jobId':
-        error = validateJobId(value);
-        break;
-    }
-
-    setErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
-  };
-
-  const fetchAndSetQuestions = async () => {
-    const { numberOfQuestions, totalMarks, difficultyLevel, jobId } = testDetails;
-    
-    if (!numberOfQuestions || !totalMarks || !difficultyLevel || !jobId) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/questionBank/questions/${difficultyLevel}?count=${numberOfQuestions}&jobId=${jobId}`
-      );
-
-      if (response.data.length < numberOfQuestions) {
-        toast.error(`Only ${response.data.length} questions available for this difficulty level`);
-        return;
-      }
-
-      const marksPerQuestion = (Number(totalMarks) / Number(numberOfQuestions)).toFixed(2);
-
-      const formattedQuestions = response.data.map(q => ({
-        question: q.question,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-        marks: marksPerQuestion
-      }));
-
-      setQuestions(formattedQuestions);
-      toast.success('Questions loaded successfully!');
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-      toast.error('Error loading questions');
-    }
-  };
-
-  const validateInitialDetails = () => {
-    const newErrors = {};
-    
-    if (!testDetails.testName) newErrors.testName = 'Test name is required';
-    if (!testDetails.duration) newErrors.duration = 'Duration is required';
-    if (!testDetails.totalMarks) newErrors.totalMarks = 'Total marks is required';
-    if (!testDetails.passingMarks) newErrors.passingMarks = 'Passing marks is required';
-    if (!testDetails.numberOfQuestions) newErrors.numberOfQuestions = 'Number of questions is required';
-    if (!testDetails.difficultyLevel) newErrors.difficultyLevel = 'Difficulty level is required';
-    if (!testDetails.jobId) newErrors.jobId = 'Job is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    try {
-      // Validation
-      if (!testDetails.testName || !testDetails.duration || !testDetails.totalMarks || !testDetails.passingMarks) {
-        toast.error('Please fill in all test details');
-        return;
-      }
-
-      // Validate questions
-      for (const question of questions) {
-        if (!question.question || question.options.some(opt => !opt) || !question.correctAnswer || !question.marks) {
-          toast.error('Please fill in all question details');
-          return;
+        } catch (err) {
+          console.error('Error fetching company data:', err);
         }
-      }
-
-      // Convert numeric strings to numbers
-      const testData = {
-        ...testDetails,
-        duration: Number(testDetails.duration),
-        totalMarks: Number(testDetails.totalMarks),
-        passingMarks: Number(testDetails.passingMarks),
-        numberOfQuestions: Number(testDetails.numberOfQuestions),
-        questions,
-        employerId: sessionStorage.getItem('userId')
       };
 
-      console.log('Sending test data:', testData); // Debug log
+      fetchCompanyData();
+    }
+  }, [navigate]);
 
-      let response;
-      if (editMode) {
-        response = await axios.put(`http://localhost:3000/test/update-test/${editTestId}`, testData);
-        toast.success('Test updated successfully!');
+
+  const validateField = (name, value) => {
+    let fieldError = {};
+
+    switch (name) {
+      case 'jobTitle': {
+        if (!value.trim()) {
+          fieldError[name] = 'Job title is required';
+        } else {
+          const spaceCount = (value.match(/ /g) || []).length;
+          if (spaceCount > 2) {
+            fieldError[name] = 'Maximum 2 spaces allowed';
+          } else {
+            // Allow letters and spaces, less strict validation
+            const words = value.trim().split(/\s+/);
+            const isValidFormat = words.every(word => 
+              !word || /^[A-Za-z]+$/.test(word)
+            );
+            if (!isValidFormat) {
+              fieldError[name] = 'Only letters are allowed';
+            }
+          }
+        }
+        break;
+      }
+
+      case 'location': {
+        if (!value.trim()) {
+          fieldError[name] = 'Location is required';
+        } else {
+          const spaceCount = (value.match(/ /g) || []).length;
+          if (spaceCount > 2) {
+            fieldError[name] = 'Maximum 2 spaces allowed';
+          } else {
+            // Allow letters and spaces, less strict validation
+            const words = value.trim().split(/\s+/);
+            const isValidFormat = words.every(word => 
+              !word || /^[A-Za-z]+$/.test(word)
+            );
+            if (!isValidFormat) {
+              fieldError[name] = 'Only letters are allowed';
+            }
+          }
+        }
+        break;
+      }
+
+      case 'jobDescription': {
+        if (!value.trim()) {
+          fieldError[name] = 'Job description is required';
+        } else if (value.trim().length < 10) {
+          fieldError[name] = 'Job description must be at least 10 characters long';
+        } else {
+          // Check each line for maximum 2 consecutive spaces
+          const lines = value.split('\n');
+          for (const line of lines) {
+            if (line.trim()) { // Only check non-empty lines
+              if (/\s{3,}/.test(line)) {
+                fieldError[name] = 'Maximum 2 consecutive spaces allowed per line';
+                break;
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      case 'salary':
+        if (value && (value < 1000 || value > 5000000)) {
+          fieldError.salary = 'Enter a valid salary ';
+        }
+        break;
+      case 'experience':
+        if (value && (!/^\d+$/.test(value) || value < 0 || value > 60)) {
+          fieldError.experience = 'Enter a valid experience';
+        }
+        break;
+      case 'lastDate':
+        const today = new Date().toISOString().split('T')[0];
+
+        // Calculate the date 6 months from today
+        const sixMonthsLater = new Date();
+        sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+        const sixMonthsLaterDate = sixMonthsLater.toISOString().split('T')[0];
+
+        if (value && value < today) {
+          fieldError.lastDate = 'Last Date cannot be in the past.';
+        } else if (value && value > sixMonthsLaterDate) {
+          fieldError.lastDate = 'Last Date cannot exceed 6 months from today.';
+        }
+        break;
+
+      case 'contactDetails':
+        const phoneRegex = /^\d{10}$/; // 10-digit phone number
+        const repeatedDigitsRegex = /(\d)\1{4,}/; // No more than 4 consecutive same digits
+        const emailRegex = /^[A-Za-z][A-Za-z0-9._%+-]{2,}@[A-Za-z0-9.-]{3,}\.(com|in|org|net|edu|gov|mil|co|info|biz|me)$/; // Standard email format
+
+        if (!phoneRegex.test(value) && !emailRegex.test(value)) {
+          fieldError.contactDetails = 'Enter a valid phone number (10 digits) or email address.';
+        } else if (phoneRegex.test(value) && repeatedDigitsRegex.test(value)) {
+          fieldError.contactDetails = 'Enter a valid Phone number';
+        }
+        break;
+      // case 'jobDescription':
+      //   if (value && value.trim().length < 10) {
+      //     fieldError.jobDescription = 'Job description must be at least 10 characters long.';
+      //   }
+      //   break;
+      case 'jobDescription':
+        if (value && value.trim().length < 10) {
+          fieldError.jobDescription = 'Job description must be at least 10 characters long.';
+        } else if (/([a-zA-Z])\1\1/.test(value)) {
+          fieldError.jobDescription = 'No letter should be repeated more than three times consecutively.';
+        } else if (/\d/.test(value)) {
+          fieldError.jobDescription = 'Job description should not contain digits.';
+        }
+        break;
+
+
+      case 'location':
+        const titleLocationRegex = /^[A-Za-z\s]+(?:\d{0,2})?$/;
+        if (!titleLocationRegex.test(value)) {
+          fieldError[name] = 'Enter a valid location.';
+        }
+        break;
+      case 'jobTitle':
+        const titleLocationRegex1 = /^[A-Za-z\s]+(?:\d{0,2})?$/;
+        if (!titleLocationRegex1.test(value)) {
+          fieldError[name] = 'Enter a valid jobtitle';
+        }
+        break;
+        case 'vaccancy':
+          const vacancyRegex = /^(?:[1-9][0-9]{0,2})$/; // Regex for numbers 1-999
+          if (!vacancyRegex.test(value)) {
+            fieldError[name] = 'Vacancy must be a number between 1 and 999';
+          }
+          break;
+      default:
+        break;
+    }
+
+    setError((prevError) => ({
+      ...prevError,
+      ...fieldError,
+    }));
+
+    return fieldError;
+  };
+
+
+  const handleInputChange = (event, newValue) => {
+    const { name, value } = event.target || {};
+
+    if (name) {
+      let processedValue = value;
+
+      // Special handling for jobTitle and location
+      if (name === 'jobTitle' || name === 'location') {
+        processedValue = value
+          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+          .split(' ')
+          .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
+          .join(' ');
+      }
+
+      // Special handling for jobDescription
+      if (name === 'jobDescription') {
+        processedValue = value
+          .split('\n')
+          .map(line => line.replace(/\s{3,}/g, '  '))
+          .join('\n');
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        [name]: processedValue
+      }));
+
+      // Validate if there's content
+      if (processedValue.trim()) {
+        const fieldError = validateField(name, processedValue);
+        setError(prev => ({
+          ...prev,
+          ...fieldError
+        }));
       } else {
-        response = await axios.post('http://localhost:3000/test/createTest', testData);
-        toast.success('Test created successfully!');
-      }
-
-      // Reset form and state
-      setTestDetails({
-        testName: '',
-        duration: '',
-        totalMarks: '',
-        passingMarks: '',
-        jobId: '',
-        numberOfQuestions: '',
-        difficultyLevel: ''
-      });
-      setQuestions([]);
-      setEditMode(false);
-      setEditTestId(null);
-      setActiveTab(0); // Switch back to tests list
-
-      // Refresh employer tests
-      const userId = sessionStorage.getItem('userId');
-      const updatedTests = await axios.get(`http://localhost:3000/test/employer-tests/${userId}`);
-      setEmployerTests(updatedTests.data);
-    } catch (error) {
-      console.error('Error details:', error.response?.data || error); // Enhanced error logging
-      toast.error(error.response?.data?.message || 'Error saving test');
-    }
-  };
-
-  const handleDeleteTest = async (testId) => {
-    if (window.confirm('Are you sure you want to delete this test?')) {
-      try {
-        await axios.delete(`http://localhost:3000/test/delete-test/${testId}`);
-        setEmployerTests(prev => prev.filter(test => test._id !== testId));
-        toast.success('Test deleted successfully');
-      } catch (error) {
-        console.error('Error deleting test:', error);
-        toast.error('Error deleting test');
+        // Clear error when empty
+        setError(prev => ({
+          ...prev,
+          [name]: null
+        }));
       }
     }
   };
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    validateField(name, value);
   };
 
-  const handleEditTest = async (testId) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const userId = sessionStorage.getItem('userId');
+    const companyName = sessionStorage.getItem('cname');
+    const logoUrl = sessionStorage.getItem('logo');
+    console.log('Logo URL:', logoUrl);
+    console.log("cname",companyName)
+    const jobData = { ...formData, userId, companyName, logoUrl };
     try {
-      const response = await axios.get(`http://localhost:3000/test/get-test/${testId}`);
-      const test = response.data;
-      
-      setTestDetails({
-        testName: test.testName,
-        duration: test.duration,
-        totalMarks: test.totalMarks,
-        passingMarks: test.passingMarks,
-        jobId: test.jobId,
-        numberOfQuestions: test.numberOfQuestions,
-        difficultyLevel: test.difficultyLevel || ''
+      const response = await axios.post('http://localhost:3000/jobs/create', jobData);
+      console.log(response.data);
+      setOpenPopup(true);
+      setFormData({
+        jobTitle: '',
+        location: '',
+        salary: '',
+        jobType: '',
+        qualifications: '',
+        skills: '',
+        jobDescription: '',
+        experience: '',
+        contactDetails: '',
+        lastDate: '',
       });
-      
-      setQuestions(test.questions || []);
-      setEditMode(true);
-      setEditTestId(testId);
-      setActiveTab(1); // Switch to create/edit tab
-    } catch (error) {
-      console.error('Error fetching test details:', error);
-      toast.error(error.response?.data?.message || 'Error loading test details');
+    } catch (err) {
+      console.error('Error posting job:', err);
+      setError((prev) => ({ ...prev, general: 'There was an issue posting the job. Please try again.' }));
     }
   };
 
-  const submitButtonText = editMode ? 'Update Test' : 'Create Test';
-
-  const handleCancelEdit = () => {
-    setTestDetails({
-      testName: '',
-      duration: '',
-      totalMarks: '',
-      passingMarks: '',
-      jobId: '',
-      numberOfQuestions: '',
-      difficultyLevel: ''
-    });
-    setQuestions([]);
-    setEditMode(false);
-    setEditTestId(null);
-    setActiveTab(0);
+  const handleClosePopup = () => {
+    setOpenPopup(false);
   };
 
+  const handleCancel = () => {
+    setFormData({
+      jobTitle: '',
+      location: '',
+      salary: '',
+      jobType: '',
+      qualifications: '',
+      skills: '',
+      jobDescription: '',
+      experience: '',
+      contactDetails: '',
+      lastDate: '',
+    });
+  };
+
+  const skillOptions = [
+    "JavaScript", "Python", "Java", "React", "Node.js", "SQL", "AWS", "C++", "C#",
+    "HTML", "CSS", "Ruby on Rails", "PHP", "Go", "Kotlin", "Swift", "TypeScript",
+    "Angular", "Vue.js", "Django", "Flutter", "Machine Learning", "Data Science",
+    "DevOps", "Blockchain", "Docker", "Kubernetes", "TensorFlow", "R", "Scala",
+    "Unity", "Unreal Engine",
+  ];
   return (
-    <>
+    <div>
       <NavbarEmployer />
-      <ToastContainer position="top-right" />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
-            Test Management
-          </Typography>
-
-          <Tabs value={activeTab} onChange={handleTabChange} centered sx={{ mb: 4 }}>
-            <Tab label="My Tests" />
-            <Tab label="Create New Test" />
-          </Tabs>
-
-          {activeTab === 0 && (
-            <StyledPaper>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Test Name</TableCell>
-                      <TableCell>Job Title</TableCell>
-                      <TableCell>Duration (min)</TableCell>
-                      <TableCell>Questions</TableCell>
-                      <TableCell>Created On</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {employerTests.map((test) => (
-                      <TableRow key={test._id}>
-                        <TableCell>{test.testName}</TableCell>
-                        <TableCell>{test.jobTitle}</TableCell>
-                        <TableCell>{test.duration}</TableCell>
-                        <TableCell>{test.numberOfQuestions}</TableCell>
-                        <TableCell>
-                          {moment(test.createdAt).format('DD MMM YYYY')}
-                        </TableCell>
-                        <TableCell>
-                          <IconButton 
-                            onClick={() => handleEditTest(test._id)}
-                            color="primary"
-                            sx={{ mr: 1 }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton 
-                            onClick={() => handleDeleteTest(test._id)}
-                            color="error"
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </StyledPaper>
-          )}
-
-          {activeTab === 1 && (
-            <div>
-              <StyledPaper>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Test Name"
-                      name="testName"
-                      value={testDetails.testName}
-                      onChange={handleTestDetailsChange}
-                      onBlur={handleTestDetailsBlur}
-                      error={!!errors.testName}
-                      helperText={errors.testName}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Duration (minutes)"
-                      name="duration"
-                      type="number"
-                      value={testDetails.duration}
-                      onChange={handleTestDetailsChange}
-                      onBlur={handleTestDetailsBlur}
-                      error={!!errors.duration}
-                      helperText={errors.duration}
-                      inputProps={{ min: 10, max: 180 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Total Marks"
-                      name="totalMarks"
-                      type="number"
-                      value={testDetails.totalMarks}
-                      onChange={handleTestDetailsChange}
-                      onBlur={handleTestDetailsBlur}
-                      error={!!errors.totalMarks}
-                      helperText={errors.totalMarks}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Passing Marks"
-                      name="passingMarks"
-                      type="number"
-                      value={testDetails.passingMarks}
-                      onChange={handleTestDetailsChange}
-                      onBlur={handleTestDetailsBlur}
-                      error={!!errors.passingMarks}
-                      helperText={errors.passingMarks}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Number of Questions"
-                      name="numberOfQuestions"
-                      type="number"
-                      value={testDetails.numberOfQuestions}
-                      onChange={handleTestDetailsChange}
-                      onBlur={handleTestDetailsBlur}
-                      error={!!errors.numberOfQuestions}
-                      helperText={errors.numberOfQuestions}
-                      inputProps={{ min: 1 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      select
-                      fullWidth
-                      label="Difficulty Level"
-                      name="difficultyLevel"
-                      value={testDetails.difficultyLevel}
-                      onChange={handleTestDetailsChange}
-                      error={!!errors.difficultyLevel}
-                      helperText={errors.difficultyLevel}
-                    >
-                      {difficultyLevels.map((level) => (
-                        <MenuItem key={level} value={level}>
-                          {level}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      select
-                      fullWidth
-                      label="Associated Job"
-                      name="jobId"
-                      value={testDetails.jobId}
-                      onChange={handleTestDetailsChange}
-                      error={!!errors.jobId}
-                      helperText={errors.jobId}
-                      onBlur={handleTestDetailsBlur}
-                    >
-                      <MenuItem value="">None</MenuItem>
-                      {availableJobs.map((job) => (
-                        <MenuItem 
-                          key={job._id} 
-                          value={job._id}
-                          disabled={job.hasTest} // Disable jobs that already have tests
-                        >
-                          {job.jobTitle} {job.hasTest ? '(Test Already Created)' : ''}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <GradientButton
-                      fullWidth
-                      onClick={() => {
-                        if (validateInitialDetails()) {
-                          fetchAndSetQuestions();
-                        }
-                      }}
-                    >
-                      Generate Questions
-                    </GradientButton>
-                  </Grid>
-                </Grid>
-              </StyledPaper>
-
-              {questions.length > 0 && (
-                <>
-                  {questions.map((question, index) => (
-                    <StyledPaper key={index}>
-                      <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                          <Typography variant="subtitle1">
-                            Question {index + 1} (Marks: {question.marks})
-                          </Typography>
-                          <Typography variant="body1">{question.question}</Typography>
-                        </Grid>
-                        {question.options.map((option, optIndex) => (
-                          <Grid item xs={12} sm={6} key={optIndex}>
-                            <Typography>
-                              Option {optIndex + 1}: {option}
-                            </Typography>
-                          </Grid>
-                        ))}
-                        <Grid item xs={12}>
-                          <Typography color="primary">
-                            Correct Answer: Option {question.correctAnswer}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </StyledPaper>
-                  ))}
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, gap: 2 }}>
-                    <GradientButton onClick={handleSubmit}>
-                      {submitButtonText}
-                    </GradientButton>
-                    {editMode && (
-                      <Button 
-                        variant="outlined" 
-                        color="secondary" 
-                        onClick={handleCancelEdit}
-                      >
-                        Cancel Edit
-                      </Button>
-                    )}
-                  </Box>
-                </>
-              )}
-            </div>
-          )}
-        </motion.div>
+      <Container
+        style={{
+          maxWidth: '100rem',
+          marginTop: '50px',
+          backgroundColor: '#4B647D',
+          borderRadius: '20px',
+          paddingLeft: '100px',
+          paddingRight: '100px',
+          minHeight: '15rem',
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontWeight: 'bolder', color: 'aliceblue', paddingTop: '30px' }}>EMPLOYER DASHBOARD</h1>
+        </div>
+        <Grid container spacing={2} justifyContent="center">
+          <Grid item xs={12} sm={3} md={3}>
+            <Link to="/employerprofile">
+              <Button variant="contained" fullWidth style={{ backgroundColor: '#0D6EFD' }}>
+                Company Profile
+              </Button>
+            </Link>
+          </Grid>
+          <Grid item xs={12} sm={3} md={3}>
+            <Link to="/PostedJobs">
+              <Button variant="contained" color="secondary" fullWidth>
+                POSTED JOBS
+              </Button>
+            </Link>
+          </Grid>
+          <Grid item xs={12} sm={3} md={3}>
+            <Link to="/createTest ">
+              <Button variant="contained" fullWidth style={{ backgroundColor: 'GREEN' }}>
+                Selection Test
+              </Button>
+            </Link>
+          </Grid>
+          <Grid item xs={12} sm={3} md={3}>
+            <Link to="/Applicants">
+              <Button variant="contained" fullWidth style={{ backgroundColor: '#00CCCD' }}>
+                Applicants
+              </Button>
+            </Link>
+          </Grid>
+        </Grid>
       </Container>
-    </>
+
+      <Container style={{ backgroundColor: '#552878', marginBottom: '30px', borderRadius: '50px', maxWidth: '84.5%' }}>
+        <h2 style={{ textAlign: 'center', fontWeight: 'bolder', marginTop: '40px', color: 'aliceblue' }}>POST A JOB</h2>
+      </Container>
+
+      <Container
+        style={{
+          maxWidth: '100rem',
+          marginTop: '50px',
+          backgroundColor: 'aliceblue',
+          borderRadius: '20px',
+          paddingLeft: '100px',
+          paddingRight: '100px',
+          minHeight: '35rem',
+          marginBottom: '20px',
+        }}
+      >
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2} style={{ marginTop: '30px' }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Job Title"
+                name="jobTitle"
+                value={formData.jobTitle}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                fullWidth
+                required
+                error={!!error.jobTitle}
+                helperText={error.jobTitle}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Location"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                fullWidth
+                required
+                error={!!error.location}
+                helperText={error.location}
+
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Salary"
+                name="salary"
+                value={formData.salary}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                fullWidth
+                required
+                error={!!error.salary}
+                helperText={error.salary}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Autocomplete
+                freeSolo
+                options={jobTypeOptions}
+                value={formData.jobType}
+                onChange={(event, newValue) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    jobType: newValue || ''
+                  }));
+                }}
+                onInputChange={(event, newInputValue) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    jobType: newInputValue
+                  }));
+                  // Validate the new input
+                  const fieldError = validateField('jobType', newInputValue);
+                  setError(prev => ({
+                    ...prev,
+                    jobType: fieldError.jobType || null
+                  }));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Job Type"
+                    name="jobType"
+                    required
+                    error={!!error.jobType}
+                    helperText={error.jobType}
+                    onBlur={handleBlur}
+                  />
+                )}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: error.jobType ? 'error.main' : 'inherit',
+                    },
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required error={!!error.qualifications}>
+                <InputLabel>Qualifications</InputLabel>
+                <Select
+                  label="Qualifications"
+                  name="qualifications"
+                  value={formData.qualifications}
+                  onChange={handleInputChange}
+                  onBlur={handleBlur}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        textAlign: 'left',
+                      },
+                    },
+                  }}
+                  sx={{ textAlign: 'left' }}  // Ensures the selected item is left-aligned
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  <MenuItem value="Associate's Degree">Associate's Degree</MenuItem>
+                  <MenuItem value="Bachelor's Degree">Bachelor's Degree</MenuItem>
+                  <MenuItem value="Master's Degree">Master's Degree</MenuItem>
+                  <MenuItem value="PhD">PhD</MenuItem>
+                  <MenuItem value="PhD">BCA</MenuItem>
+                  <MenuItem value="PhD">MCA</MenuItem>
+                  <MenuItem value="PhD">BSC Compter.App</MenuItem>
+                  <MenuItem value="PhD">MCS Computer.App</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+                <FormHelperText>{error.qualifications}</FormHelperText>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Autocomplete
+                multiple
+                options={skillOptions}
+                getOptionLabel={(option) => option}
+                onChange={(event, newValue) => handleInputChange(event, newValue)}
+                onBlur={handleBlur}
+                value={formData.skills ? formData.skills.split(', ') : []} // Ensure a fallback if undefined
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Skills"
+                    placeholder="Select skills"
+                    fullWidth
+                    error={!!error.skills}
+                    helperText={error.skills}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Experience"
+                name="experience"
+                value={formData.experience}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                fullWidth
+                required
+                error={!!error.experience}
+                helperText={error.experience}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Contact Details"
+                name="contactDetails"
+                value={formData.contactDetails}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                fullWidth
+                required
+                error={!!error.contactDetails}
+                helperText={error.contactDetails}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Last Date to Apply"
+                name="lastDate"
+                type="date"
+                value={formData.lastDate}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+                required
+                error={!!error.lastDate}
+                helperText={error.lastDate}
+              />
+            </Grid><Grid item xs={12} md={6}>
+              <TextField
+                label="No.Of.Vaccancies"
+                name="vaccancy"
+                value={formData.vaccancy}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                fullWidth
+                required
+                error={!!error.vaccancy}
+                helperText={error.vaccancy}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Job Description"
+                name="jobDescription"
+                value={formData.jobDescription}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                multiline
+                rows={4}
+                fullWidth
+                required
+                error={!!error.jobDescription}
+                helperText={error.jobDescription}
+              />
+            </Grid>
+
+
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                onClick={handleCancel}
+                style={{ backgroundColor: '#cc0000', color: 'white', marginRight: '20px', marginTop: '' }}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained" color="primary" >
+                Post Job
+              </Button>
+
+            </Grid>
+
+          </Grid>
+
+        </form>
+      </Container>
+
+      {/* Success Dialog */}
+      <Dialog open={openPopup} onClose={handleClosePopup}>
+        <DialogTitle>Job Posted</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Your job has been posted successfully!</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePopup} color="primary">
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Footer />
+    </div>
   );
 };
 
-export default Selection;
+export default EmployerPage;
+
+

@@ -5,7 +5,7 @@ import NavbarAdmin from './admin/NavbarAdmin';
 import NavbarEmployee from './employee/NavbarEmployee';
 import NavbarEmployer from './employer/NavbarEmployer';
 import { Avatar, Container, Divider, ListItem, ListItemText, Button, Card, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Grid, Chip, Pagination, Box, CircularProgress, FormControl, InputLabel, Select, MenuItem ,Drawer} from '@mui/material';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -32,7 +32,6 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { debounce } from 'lodash';
 import { Autocomplete } from '@mui/material';
-import { formatDate } from '../utils/dateFormatter';
 
 const pulseAnimation = keyframes`
   0% { transform: scale(1); }
@@ -116,153 +115,88 @@ const StyledFeatureCard = styled(motion.div)(({ theme, color }) => ({
 }));
 
 const AnimatedJobCard = styled(motion.div)(({ theme }) => ({
-  background: 'rgba(255, 255, 255, 0.95)',
-  borderRadius: '20px',
-  height: '220px',
+  background: 'rgba(255, 255, 255, 0.9)',
+  borderRadius: '12px',
+  height: '180px',
   position: 'relative',
   overflow: 'hidden',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+  transition: 'all 0.3s ease-in-out',
   cursor: 'pointer',
+  display: 'flex',
+  flexDirection: 'column',
   '&::before': {
     content: '""',
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
+    width: '100%',
     height: '4px',
-    background: 'linear-gradient(90deg, #4facfe, #00f2fe)',
-    opacity: 0,
-    transition: 'opacity 0.3s ease',
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '100%',
-    background: 'linear-gradient(180deg, transparent 0%, rgba(79, 172, 254, 0.1) 100%)',
+    background: 'linear-gradient(90deg, #2196f3, #1976d2)',
     opacity: 0,
     transition: 'opacity 0.3s ease',
   },
   '&:hover': {
-    transform: 'translateY(-10px) scale(1.02)',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+    transform: 'translateY(-5px)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
     '&::before': {
       opacity: 1,
     },
-    '&::after': {
-      opacity: 1,
-    },
-    '& .job-card-content': {
-      transform: 'translateY(-5px)',
-    },
-    '& .company-logo': {
-      transform: 'scale(1.1) rotate(5deg)',
-    },
-    '& .job-title': {
-      color: '#4facfe',
-  },
-  },
+  }
 }));
 
-const JobCardContent = styled(Box)({
-  padding: '20px',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
+const NavButton = styled(Button)(({ theme }) => ({
+  color: '#fff',
+  margin: '0 10px',
   position: 'relative',
-  zIndex: 1,
-  transition: 'transform 0.3s ease',
-});
-
-const SearchContainer = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '40px',
-  padding: '30px',
-  marginBottom: '40px',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
-  width: '100%',
-  maxWidth: '800px',
-  margin: '0 auto 40px auto',
-  position: 'relative',
-  overflow: 'hidden',
-  '&::before': {
+  '&::after': {
     content: '""',
     position: 'absolute',
-    top: -100,
-    left: -100,
-    width: 200,
-    height: 200,
-    background: 'radial-gradient(circle, rgba(79, 172, 254, 0.1) 0%, transparent 70%)',
-    animation: 'float 6s infinite ease-in-out',
+    width: '0',
+    height: '2px',
+    bottom: 0,
+    left: '50%',
+    background: '#fff',
+    transition: 'all 0.3s ease',
+    transform: 'translateX(-50%)',
   },
-  '@keyframes float': {
-    '0%, 100%': { transform: 'translate(0, 0)' },
-    '50%': { transform: 'translate(30px, 30px)' },
+  '&:hover': {
+    backgroundColor: 'transparent',
+    '&::after': {
+      width: '100%',
+    },
+    transform: 'translateY(-3px)',
   },
 }));
 
-const JobsContainer = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
-  backdropFilter: 'blur(20px)',
-  borderRadius: '30px',
-  padding: '40px',
-  margin: '40px auto',
-  maxWidth: '1400px',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+const JobCard = styled(motion.div)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+  borderRadius: '16px',
+  padding: '24px',
+  height: '100%',
   position: 'relative',
   overflow: 'hidden',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  transition: 'all 0.3s ease-in-out',
+  cursor: 'pointer',
+  border: '1px solid rgba(0,0,0,0.05)',
   '&::before': {
     content: '""',
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '5px',
-    background: 'linear-gradient(90deg, #4facfe, #00f2fe, #4facfe)',
-    backgroundSize: '200% 100%',
-    animation: 'gradient 3s linear infinite',
-  },
-  '@keyframes gradient': {
-    '0%': { backgroundPosition: '0% 0%' },
-    '100%': { backgroundPosition: '200% 0%' },
-  },
-}));
-
-const StyledAvatar = styled(Avatar)(({ theme }) => ({
-  width: '80px',
-  height: '80px',
-  border: '3px solid #fff',
-  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-  transition: 'all 0.3s ease-in-out',
-  '&:hover': {
-    transform: 'scale(1.1) rotate(5deg)',
-    boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
-    border: '3px solid #1a237e',
-  }
-}));
-
-const JobsSectionTitle = styled('div')(({ theme }) => ({
-  textAlign: 'center',
-  marginBottom: '40px',
-  position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    bottom: '-10px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '150px',
     height: '4px',
-    background: 'linear-gradient(90deg, #1a237e, #01579b)',
-    borderRadius: '2px',
+    background: 'linear-gradient(90deg, #2196f3, #1976d2)',
+    opacity: 0,
+    transition: 'opacity 0.3s ease',
+  },
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+    '&::before': {
+      opacity: 1,
+    },
   }
 }));
 
@@ -284,6 +218,60 @@ const FeaturesSectionContainer = styled(Container)(({ theme }) => ({
   }
 }));
 
+const JobsSectionTitle = styled('div')(({ theme }) => ({
+  textAlign: 'center',
+  marginBottom: '40px',
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    bottom: '-10px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '150px',
+    height: '4px',
+    background: 'linear-gradient(90deg, #1a237e, #01579b)',
+    borderRadius: '2px',
+  }
+}));
+
+const StyledAvatar = styled(Avatar)(({ theme }) => ({
+  width: '80px',
+  height: '80px',
+  border: '3px solid #fff',
+  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+  transition: 'all 0.3s ease-in-out',
+  '&:hover': {
+    transform: 'scale(1.1) rotate(5deg)',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
+    border: '3px solid #1a237e',
+  }
+}));
+
+const JobsContainer = styled(Box)(({ theme }) => ({
+  background: 'rgba(255, 255, 255, 0.1)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '20px',
+  padding: '30px',
+  margin: '20px auto',
+  maxWidth: '1200px',
+  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+  border: '1px solid rgba(255, 255, 255, 0.18)',
+}));
+
+const SearchContainer = styled(Box)(({ theme }) => ({
+  background: 'rgba(255, 255, 255, 0.15)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '30px',
+  padding: '20px',
+  marginBottom: '30px',
+  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+  border: '1px solid rgba(255, 255, 255, 0.18)',
+  width: '100%',
+  maxWidth: '600px',
+  margin: '0 auto 30px auto',
+}));
+
 const FilterDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
     width: 300,
@@ -300,223 +288,6 @@ const FilterChip = styled(Chip)(({ theme }) => ({
     backgroundColor: '#4a0399',
   },
 }));
-
-const formatExperience = (experience) => {
-  if (!experience) return 'Not specified';
-  
-  if (typeof experience === 'object') {
-    const years = experience.years || 0;
-    const months = experience.months || 0;
-    if (years === 0 && months === 0) return 'Fresher';
-    return `${years} year${years !== 1 ? 's' : ''} ${months} month${months !== 1 ? 's' : ''}`.trim();
-  }
-  
-  return `${experience} year${experience !== 1 ? 's' : ''}`;
-};
-
-const GlowingTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '4.5rem',
-  fontWeight: 800,
-  background: 'linear-gradient(90deg, #00f2fe 0%, #4facfe 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  textShadow: '0 0 20px rgba(79, 172, 254, 0.5)',
-  animation: 'glow 3s ease-in-out infinite alternate',
-  '@keyframes glow': {
-    '0%': {
-      textShadow: '0 0 20px rgba(79, 172, 254, 0.5)',
-    },
-    '100%': {
-      textShadow: '0 0 30px rgba(79, 172, 254, 0.8), 0 0 50px rgba(79, 172, 254, 0.3)',
-    },
-  },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '3rem',
-  },
-}));
-
-const FuturisticSubtitle = styled(Typography)(({ theme }) => ({
-  fontSize: '1.8rem',
-  color: '#fff',
-  opacity: 0.9,
-  fontWeight: 300,
-  letterSpacing: '1px',
-  textShadow: '0 0 10px rgba(255,255,255,0.5)',
-  animation: 'fadeInUp 1s ease-out',
-  '@keyframes fadeInUp': {
-    from: {
-      opacity: 0,
-      transform: 'translateY(20px)',
-    },
-    to: {
-      opacity: 0.9,
-      transform: 'translateY(0)',
-    },
-  },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '1.4rem',
-  },
-}));
-
-const FuturisticHeroSection = styled('section')(({ theme }) => ({
-  background: 'linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%)',
-  minHeight: '600px',
-  position: 'relative',
-  overflow: 'hidden',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-    animation: 'pulse 4s ease-in-out infinite',
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    width: '200%',
-    height: '200%',
-    background: 'linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.1) 48%, rgba(255,255,255,0.1) 52%, transparent 55%)',
-    transform: 'translate(-50%, -50%) rotate(45deg)',
-    animation: 'scan 10s linear infinite',
-  },
-  '@keyframes scan': {
-    '0%': { transform: 'translate(-50%, -50%) rotate(45deg) translateY(100%)' },
-    '100%': { transform: 'translate(-50%, -50%) rotate(45deg) translateY(-100%)' },
-  },
-  '@keyframes pulse': {
-    '0%': { opacity: 0.5 },
-    '50%': { opacity: 1 },
-    '100%': { opacity: 0.5 },
-  },
-}));
-
-const HeroTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '3.5rem',
-  fontWeight: 900,
-  background: 'linear-gradient(-45deg, #fff 0%, #e3f2fd 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  marginBottom: '1rem',
-  position: 'relative',
-  textAlign: 'center',
-  animation: 'titlePulse 3s ease-in-out infinite',
-  '@keyframes titlePulse': {
-    '0%, 100%': {
-      textShadow: '0 0 30px rgba(255,255,255,0.3)',
-      transform: 'scale(1)',
-    },
-    '50%': {
-      textShadow: '0 0 50px rgba(255,255,255,0.5)',
-      transform: 'scale(1.02)',
-    },
-  },
-  [theme.breakpoints.down('md')]: {
-    fontSize: '2.8rem',
-  },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '2rem',
-  },
-}));
-
-const AnimatedSubtitle = styled(Typography)(({ theme }) => ({
-  fontSize: '1.6rem',
-  color: '#fff',
-  opacity: 0.9,
-  fontWeight: 300,
-  letterSpacing: '3px',
-  textAlign: 'center',
-  position: 'relative',
-  textShadow: '0 2px 15px rgba(255,255,255,0.3)',
-  animation: 'subtitleFloat 5s ease-in-out infinite',
-  '@keyframes subtitleFloat': {
-    '0%, 100%': {
-      transform: 'translateY(0)',
-    },
-    '50%': {
-      transform: 'translateY(-10px)',
-    },
-  },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '1.2rem',
-    letterSpacing: '2px',
-  },
-}));
-
-const EnhancedHeroSection = styled('section')(({ theme }) => ({
-  background: 'linear-gradient(-45deg, #1a237e, #0d47a1, #283593, #1565c0)',
-  backgroundSize: '400% 400%',
-  animation: 'gradientBG 15s ease infinite',
-  minHeight: '60vh',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  position: 'relative',
-  overflow: 'hidden',
-  padding: '2rem 0',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 100%)',
-  },
-}));
-
-const ParticlesContainer = styled('div')({
-  position: 'absolute',
-  width: '100%',
-  height: '100%',
-  top: 0,
-  left: 0,
-  overflow: 'hidden',
-  zIndex: 1,
-});
-
-const FloatingShapes = styled('div')({
-  position: 'absolute',
-  width: '100%',
-  height: '100%',
-  top: 0,
-  left: 0,
-  overflow: 'hidden',
-  zIndex: 1,
-  '& > div': {
-    position: 'absolute',
-    background: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: '50%',
-    animation: 'float 8s infinite',
-  },
-});
-
-const WaveContainer = styled('div')({
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  width: '100%',
-  overflow: 'hidden',
-  lineHeight: 0,
-  transform: 'rotate(180deg)',
-  '& svg': {
-    position: 'relative',
-    display: 'block',
-    width: 'calc(100% + 1.3px)',
-    height: '120px',
-  },
-  '& .shapeFill': {
-    fill: '#FFFFFF',
-    opacity: 0.2,
-  },
-});
 
 const HomePage = () => {
   const [role, setRole] = useState('guest');
@@ -637,79 +408,67 @@ const HomePage = () => {
       const jobId = sessionStorage.getItem('selectedJobId');
       const employerId = sessionStorage.getItem('employerId');
       const companyName = sessionStorage.getItem('companyName');
+      const logo = sessionStorage.getItem('logo');
+      
+      console.log('JOB ID:', jobId);
+      console.log('User ID:', userId);
       const jobTitle = sessionStorage.getItem('selectedJob');
 
-      // Show loading toast
-      toast.loading('Submitting application...'); // Simplified toast
-
+  
       // Fetch user profile data
       const profileResponse = await axios.get(`http://localhost:3000/Employeeprofile/profile/${userId}`);
       
-      // Extract profile data with default values
+      // Assuming the profile response contains the needed fields
       const {
         name,
         email,
-        experienceYears = 0,
-        experienceMonths = 0,
-        degree = [],
-        resume = '',
-        address = '',
-        skills = [],
-        jobPreferences = [],
-        photo = '',
+        experience,
+        degree,
+        
+        resume,  // Make sure the resume field is included in your API response
+        address,
+        skills,
+        jobPreferences,
+        photo,   // Ensure that this is included in your API response
         dob,
-        phone = '',
-        atsScore = 0
-      } = profileResponse.data;
-
-      // Calculate total experience
-      const experience = (experienceYears || 0) + ((experienceMonths || 0) / 12);
-
+        phone,
+      } = profileResponse.data; // Adjust according to the actual response structure
+  
       // Prepare the application data
       const applicationData = {
         userId,
         jobId,
-        employerId,
+        jobTitle,
+        companyName,
         name,
         email,
         experience,
-        degree: Array.isArray(degree) ? degree : [degree].filter(Boolean),
+        degree,
         jobTitle,
         resume,
         address,
-        skills: Array.isArray(skills) ? skills : skills?.split(',').filter(Boolean) || [],
-        jobPreferences: Array.isArray(jobPreferences) ? jobPreferences : jobPreferences?.split(',').filter(Boolean) || [],
+        skills,
+        jobPreferences,
         photo,
         dob,
         phone,
-        companyName,
-        atsScore
+        employerId,
       };
-
+  
       // Send application data to the server
       const response = await axios.post('http://localhost:3000/jobs/apply', applicationData);
-
-      // Clear all toasts
-      toast.dismiss();
-
+  
       // Show success toast
-      toast.success('Successfully applied for the job!');
-
-      // Close the dialog
-      handleClose();
-
+      toast.success(response.data.message, {
+        onClose: () => console.log('Success toast closed'),  // Optional handler
+      });
     } catch (error) {
-      // Clear all toasts
-      toast.dismiss();
-      
-      // Handle ATS score error specifically
-      if (error.response?.data?.atsScoreTooLow) {
-        toast.error(
-          `Your ATS score (${error.response.data.userScore}%) does not meet the requirement (${error.response.data.requiredScore}%). Please improve your resume.`
-        );
-      } else {
-        toast.error(error.response?.data?.message || 'Failed to apply for the job');
-      }
+      const errorMessage = error.response ? error.response.data.message : 'An error occurred';
+  
+      // Show error toast
+      toast.error(errorMessage, {
+        onClose: () => console.log('Error toast closed'),  // Optional handler
+      });
     }
   };
   
@@ -803,66 +562,65 @@ const HomePage = () => {
     handleFilterChange(filterKey, '');
   };
 
-  // Add this function near the top of the HomePage component
+  // Add this function to check for expired jobs
   const checkExpiredJobs = async () => {
     try {
-      await axios.put('http://localhost:3000/jobs/check-expired-jobs');
-      // Refresh jobs list after checking expired status
-      const response = await axios.get('http://localhost:3000/jobs/approvedHome');
-      setJobs(response.data);
+      await axios.put('http://localhost:3000/jobs/checkExpired');
+      fetchJobs(); // Refresh the jobs list
     } catch (error) {
       console.error('Error checking expired jobs:', error);
     }
   };
 
-  // Add this useEffect to periodically check for expired jobs
+  // Add useEffect to check expired jobs periodically
   useEffect(() => {
+    // Check expired jobs when component mounts
+    const checkExpiredJobs = async () => {
+      try {
+        await axios.put('http://localhost:3000/jobs/checkExpired');
+        fetchJobs(); // Refresh the jobs list
+      } catch (error) {
+        console.error('Error checking expired jobs:', error);
+      }
+    };
+
     checkExpiredJobs();
     // Check every hour
     const interval = setInterval(checkExpiredJobs, 3600000);
+
     return () => clearInterval(interval);
   }, []);
 
-  // Update the JobCard component to show expired status
+  // Update your fetchJobs function (if you have one)
+  const fetchJobs = async () => {
+    try {
+      // This will automatically update expired jobs before fetching
+      const response = await axios.get('http://localhost:3000/jobs/approvedHome');
+      setJobs(response.data);
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+      toast.error('Error fetching jobs. Please try again.');
+    }
+  };
+
+  // Update your job card to show expired status if applicable
   const JobCard = ({ job }) => {
     const isExpired = new Date(job.lastDate) < new Date();
     
     return (
       <AnimatedJobCard
-        onClick={() => !isExpired && handleClickOpen(job)}
-        whileHover={{ y: -5 }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        sx={{ opacity: isExpired ? 0.7 : 1 }}
-      >
-        <JobCardContent className="job-card-content">
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <StyledAvatar
-              src={`http://localhost:3000/${job.logoUrl}`}
-              alt={job.companyName}
-              className="company-logo"
-            />
-            <Box sx={{ ml: 2 }}>
-              <Typography
-                variant="h6"
-                className="job-title"
+        onClick={() => handleClickOpen(job)}
+        whileHover={{ y: -5, transition: { duration: 0.2 } }}
         sx={{
-                  fontWeight: 600,
-                  color: '#333',
-                  transition: 'color 0.3s ease',
-                }}
-              >
-                {job.jobTitle}
-              </Typography>
-              <Typography
-                variant="subtitle2"
-                color="primary"
-                sx={{ fontWeight: 500 }}
-              >
-                {job.companyName}
-              </Typography>
-            </Box>
+          height: '180px',
+          width: '90%',
+          opacity: isExpired ? 0.7 : 1,
+        }}
+      >
+        <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          {/* Existing card content */}
+          
+          {/* Add expired badge if job is expired */}
           {isExpired && (
             <Chip
               label="Expired"
@@ -870,61 +628,25 @@ const HomePage = () => {
               size="small"
               sx={{
                 position: 'absolute',
-                  top: 20,
-                  right: 20,
+                top: 10,
+                right: 10,
                 backgroundColor: '#ff1744',
                 color: 'white',
               }}
             />
           )}
-          </Box>
-
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            <Chip
-              icon={<LocationOnIcon sx={{ fontSize: '0.9rem' }} />}
-              label={job.location}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                color: '#388e3c',
-                '& .MuiChip-icon': { color: '#388e3c' },
-              }}
-            />
-            <Chip
-              icon={<CurrencyRupeeIcon sx={{ fontSize: '0.9rem' }} />}
-              label={job.salary}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                color: '#1976d2',
-                '& .MuiChip-icon': { color: '#1976d2' },
-              }}
-            />
-            <Chip
-              icon={<WorkIcon sx={{ fontSize: '0.9rem' }} />}
-              label={job.jobType}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                color: '#7b1fa2',
-                '& .MuiChip-icon': { color: '#7b1fa2' },
-              }}
-            />
-          </Box>
-
+          
+          {/* Add last date information */}
           <Typography
             variant="caption"
             sx={{
               color: isExpired ? '#ff1744' : 'text.secondary',
-              mt: 'auto',
-              display: 'flex',
-              alignItems: 'center',
+              mt: 1
             }}
           >
-            <TodayIcon sx={{ fontSize: '1rem', mr: 0.5 }} />
-            Last Date: {formatDate(job.lastDate)}
+            Last Date: {new Date(job.lastDate).toLocaleDateString()}
           </Typography>
-        </JobCardContent>
+        </Box>
       </AnimatedJobCard>
     );
   };
@@ -936,85 +658,17 @@ const HomePage = () => {
       {role === 'employee' && <NavbarEmployee />}
       {role === 'employer' && <NavbarEmployer />}
 
-      <EnhancedHeroSection>
-        <ParticlesContainer>
-          {[...Array(30)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
-                scale: Math.random() * 0.5 + 0.5,
-                opacity: Math.random() * 0.3 + 0.2,
-              }}
-              animate={{
-                y: [0, -30, 0],
-                x: [0, Math.random() * 50 - 25, 0],
-                scale: [1, 1.2, 1],
-                opacity: [0.2, 0.5, 0.2],
-              }}
-              transition={{
-                duration: Math.random() * 3 + 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              style={{
-                position: 'absolute',
-                width: Math.random() * 8 + 3,
-                height: Math.random() * 8 + 3,
-                borderRadius: '50%',
-                background: 'white',
-                boxShadow: '0 0 10px rgba(255,255,255,0.5)',
-              }}
-            />
-          ))}
-        </ParticlesContainer>
-
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
-          <Box 
-            sx={{ 
-              textAlign: 'center',
-              position: 'relative',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                bottom: '-20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '200px',
-                height: '3px',
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
-              }
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <HeroTitle variant="h1">
-                Welcome to JobPortal
-              </HeroTitle>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
-              <AnimatedSubtitle>
-                Your gateway to finding the best jobs and top talents
-              </AnimatedSubtitle>
-            </motion.div>
-          </Box>
-        </Container>
-
-        <WaveContainer>
-          <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="shapeFill"></path>
-          </svg>
-        </WaveContainer>
-      </EnhancedHeroSection>
+      <section style={styles.hero}>
+        <div className="container text-center text-white">
+          <h1 style={styles.heroTitle}>Welcome to JobPortal</h1>
+          <p style={styles.heroSubtitle}>Your gateway to finding the best jobs and top talents</p>
+          {role === 'guest' && (
+            <a href="/signup" className="btn btn-lg mt-4" style={styles.getStartedButton}>
+              Get Started
+            </a>
+          )}
+        </div>
+      </section>
 
       <section style={styles.features}>
         <Container maxWidth="lg" sx={{ py: 8 }}>
@@ -1164,7 +818,7 @@ const HomePage = () => {
                 <Box sx={{ 
                   mt: 2, 
                   display: 'flex', 
-                  justifyContent: 'center', 
+                  justifyContent: 'center',
                   alignItems: 'center',
                   gap: 1
                 }}>
@@ -1329,7 +983,96 @@ const HomePage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    <JobCard job={job} />
+                    <AnimatedJobCard
+                      onClick={() => handleClickOpen(job)}
+                      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                      sx={{
+                        height: '200px',
+                        width: '90%',
+                      }}
+                    >
+                      <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        {/* Avatar and Text Container */}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          mb: 2,
+                          gap: 2
+                        }}>
+                          <StyledAvatar
+                            src={`http://localhost:3000/${job.logoUrl}`}
+                            alt={job.companyName}
+                          />
+                          <Box sx={{ 
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{
+                                fontWeight: 600,
+                                color: '#333',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                mb: 0.5,
+                                textAlign: 'center'
+                              }}
+                            >
+                              {job.jobTitle}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="primary"
+                              sx={{
+                                fontWeight: 500,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center'
+                              }}
+                            >
+                              {job.companyName}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Chips */}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          gap: 1,
+                          mt: 'auto'
+                        }}>
+                          <Chip
+                            icon={<LocationOnIcon sx={{ fontSize: '0.9rem' }} />}
+                            label={job.location}
+                            size="large"
+                            sx={{
+                              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                              color: '#388e3c',
+                              '& .MuiChip-icon': { color: '#388e3c' },
+                            }}
+                          />
+                          <Chip
+                            icon={<CurrencyRupeeIcon sx={{ fontSize: '0.9rem' }} />}
+                            label={job.salary}
+                            size="large"
+                            sx={{
+                              backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                              color: '#1976d2',
+                              '& .MuiChip-icon': { color: '#1976d2' },
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    </AnimatedJobCard>
                   </motion.div>
                 </Grid>
               ))}
@@ -1368,22 +1111,14 @@ const HomePage = () => {
         <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
           {selectedJob && (
             <>
-              <DialogTitle 
-                style={{
-                  position: 'relative', 
-                  textAlign: 'center', 
-                  paddingRight: '40px', 
-                  backgroundColor: '#360275',
+              <DialogTitle style={{
+                position: 'relative', textAlign: 'center', paddingRight: '40px', backgroundColor: '#360275',
                 color: '#fff',
-                }}
-              >
+              }}>
                 <Typography variant="h6" component="div" style={{ flexGrow: 1 }}>
                   {selectedJob.jobTitle}
                 </Typography>
-                <IconButton 
-                  onClick={handleClose} 
-                  style={{ position: 'absolute', right: 0, top: 0 }}
-                >
+                <IconButton onClick={handleClose} style={{ position: 'absolute', right: 0, top: 0 }}>
                   <CloseIcon />
                 </IconButton>
               </DialogTitle>
@@ -1415,7 +1150,11 @@ const HomePage = () => {
                   <div style={styles.iconText}>
                     <TodayIcon color="action" style={styles.icon} />
                     <Typography variant="body2" color="textSecondary">
-                      Last Date to Apply: {formatDate(selectedJob.lastDate)}
+                      Last Date to Apply: {new Date(selectedJob.lastDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'  
+                      })}
                     </Typography>
                   </div>
                   <div style={styles.iconText}>
@@ -1427,7 +1166,7 @@ const HomePage = () => {
                   <div style={styles.iconText}>
                     <BadgeIcon color="action" style={styles.icon} />
                     <Typography variant="body2" color="textSecondary">
-                      Experience: {formatExperience(selectedJob.experience)}
+                      Experience: {selectedJob.experience} years
                     </Typography>
                   </div>
                   <div style={styles.iconText}>
@@ -1458,22 +1197,24 @@ const HomePage = () => {
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => fetchCompanyDetails(selectedJob.userId)}
+                      onClick={() => fetchCompanyDetails(selectedJob.userId)} // Pass the company ID
                     >
                       View Company Profile
                     </Button>
                     <div>
-                      {role === "employee" && (
-                        <Button 
-                          variant="contained" 
-                          color="secondary" 
-                          onClick={() => handleApply(selectedJob)}
-                          disabled={!selectedJob}
-                        >
-                          Apply Now
-                        </Button>
-                      )}
-                    </div>
+                    <ToastContainer />
+  {jobs.map((job, index) => (
+    <div key={job._id}>
+  <h2>{job.title}</h2>
+  {index === 0 && role === "employee" && (
+    <Button variant="contained" color="secondary" onClick={() => handleApply()}>
+      Apply
+    </Button>
+  )}
+</div>
+
+  ))}
+</div>
                   </div>
                 </Card>
               </DialogContent>

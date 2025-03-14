@@ -1,13 +1,62 @@
 const mongoose = require('mongoose');
 const jobSchema = new mongoose.Schema({
-  jobTitle: { type: String, required: true },
+  jobTitle: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        return v.length >= 4 && // Minimum 4 characters
+        (v.match(/ /g) || []).length <= 2 && // Maximum 2 spaces
+        /^[A-Za-z\s]+$/.test(v); // Only letters and spaces
+      },
+      message: 'Job title must be at least 4 characters long and can have maximum 2 spaces'
+    }
+  },
   companyName: { type: String, required: true },
-  location: { type: String, required: true },
+  location: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        return v.length >= 4 && // Minimum 4 characters
+        (v.match(/ /g) || []).length <= 2 && // Maximum 2 spaces
+        /^[A-Za-z\s]+$/.test(v); // Only letters and spaces
+      },
+      message: 'Location must be at least 4 characters long and can have maximum 2 spaces'
+    }
+  },
   salary: { type: String, required: true },
-  jobType: { type: String, required: true },
+  jobType: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        if (!v) return false;
+        const parts = v.split(',');
+        return parts.length <= 2 && // Maximum 2 job types
+               parts.every(part => part.trim().length > 0) && // No empty parts
+               !/,\s*,/.test(v); // No consecutive commas
+      },
+      message: 'Job type format is invalid. Maximum 2 types allowed, separated by single comma'
+    }
+  },
   qualifications: { type: [String], required: true },
   skills: { type: [String], required: true },
-  jobDescription: { type: String, required: true },
+  jobDescription: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        // Check for maximum 2 spaces per line and no repeated characters
+        const lines = v.split('\n');
+        return lines.every(line => {
+          const spaceCount = (line.match(/ /g) || []).length;
+          return spaceCount <= 2 && !/([a-zA-Z])\1{2}/.test(line);
+        });
+      },
+      message: 'Job description can have maximum 2 spaces per line and no repeated characters'
+    }
+  },
   experience: {
     years: {
       type: Number,
@@ -58,6 +107,12 @@ const jobSchema = new mongoose.Schema({
     type: String,
     enum: ['Pending', 'Completed'], // Specify possible values
     default: 'Pending' // Default value
+  },
+  atsScoreRequirement: {
+    type: Number,
+    required: true,
+    min: 10,
+    max: 100
   }
 });
 

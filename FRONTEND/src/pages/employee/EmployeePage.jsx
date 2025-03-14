@@ -39,6 +39,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import NavbarEmployee from './NavbarEmployee';
 import Footer from '../../components/Footer';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
+import { formatDate } from '../../utils/dateFormatter';
+import moment from 'moment';
+import { alpha } from '@mui/material/styles';
+
+// Import icons individually to avoid the large bundle size
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -50,12 +56,14 @@ import WorkIcon from '@mui/icons-material/Work';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import SendIcon from '@mui/icons-material/Send';
-import toast, { Toaster } from 'react-hot-toast';
 import BusinessIcon from '@mui/icons-material/Business';
 import StarIcon from '@mui/icons-material/Star';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
-import { formatDate } from '../../utils/dateFormatter';
+import CodeIcon from '@mui/icons-material/Code';
+import InfoIcon from '@mui/icons-material/Info';
+import SchoolIcon from '@mui/icons-material/School';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 const EmployeePage = () => {
   const [userId] = useState(sessionStorage.getItem('userId'));
@@ -78,7 +86,13 @@ const EmployeePage = () => {
     jobPreferences: []
   });
   const [profileData, setProfileData] = useState(null);
+  const [jobSuggestions, setJobSuggestions] = useState([]);
+  const [pendingTests, setPendingTests] = useState([]);
   const navigate = useNavigate();
+
+  // Add new state for the match details dialog
+  const [openMatchDetails, setOpenMatchDetails] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   const RESUME_CRITERIA = {
     keywords: [
@@ -191,62 +205,36 @@ const EmployeePage = () => {
     }
 
     fetchProfileAndSuggest();
+    fetchEligibleTests();
+  }, [userId]);
 
-    const fetchPendingTests = async () => {
-      try {
-        const employeeId = sessionStorage.getItem('userId');
-        console.log('Fetching tests for employee:', employeeId);
-        
-        // First, get all applications for this user
-        const applicationsResponse = await axios.get(
-          `http://localhost:3000/jobs/employee-applications`,
-          {
-            params: { userId: employeeId }
-          }
-        );
+  const fetchEligibleTests = async () => {
+    try {
+      const userId = sessionStorage.getItem('userId');
+      if (!userId) return;
 
-        console.log('Applications found:', applicationsResponse.data);
-
-        // Filter applications that require tests
-        const applicationsWithTests = applicationsResponse.data.filter(
-          app => app.testStatus === 'Pending'
-        );
-
-        if (applicationsWithTests.length > 0) {
-          setHasPendingTests(true);
-          
-          // Get test details for these applications
-          const testsResponse = await axios.get(
-            `http://localhost:3000/test/pending-tests/${employeeId}`
-          );
-          
-          console.log('Tests found:', testsResponse.data);
-          
-          if (testsResponse.data && testsResponse.data.length > 0) {
-            setTests(testsResponse.data.map(test => ({
-              ...test,
-              jobTitle: test.jobTitle || 'Not specified',
-              companyName: test.companyName || 'Not specified'
-            })));
-          } else {
-            setTests([]);
-          }
-        } else {
-          setHasPendingTests(false);
-          setTests([]);
-        }
-      } catch (error) {
-        console.error('Error fetching pending tests:', error);
-        toast.error('Failed to fetch pending tests');
-        setHasPendingTests(false);
+      const response = await axios.get(`http://localhost:3000/test/employee-tests/${userId}`);
+      
+      if (response.data && response.data.length > 0) {
+        setTests(response.data.map(test => ({
+          ...test,
+          status: moment(test.lastDate).isBefore(moment()) ? 'Expired' : 'Active'
+        })));
+        setHasPendingTests(true);
+      } else {
         setTests([]);
+        setHasPendingTests(false);
       }
-    };
-
-    fetchPendingTests();
-  }, [navigate, userId]);
+    } catch (error) {
+      console.error('Error fetching eligible tests:', error);
+      toast.error('Failed to fetch tests');
+      setTests([]);
+      setHasPendingTests(false);
+    }
+  };
 
   const handleNotificationClick = () => {
+    fetchEligibleTests();
     setOpenPopup(true);
   };
 
@@ -413,114 +401,109 @@ const EmployeePage = () => {
     }
   };
 
-  const handleApply = async (job) => {
-    console.log('Starting application process for job:', job.jobTitle);
+  const refreshJobs = async () => {
     try {
       const userId = sessionStorage.getItem('userId');
-      console.log('User ID:', userId);
-      
-      if (!userId) {
-        console.log('No user ID found - redirecting to login');
-        toast.error('Please login to apply for jobs');
-        navigate('/login');
-        return;
-      }
+      if (!userId) return;
 
-      // Show loading toast
-      const loadingToastId = toast.loading('Checking application status...');
+      // Get user profile to fetch skills and preferences
+      const profileResponse = await axios.get(`http://localhost:3000/Employeeprofile/profile/${userId}`);
+      const userProfile = profileResponse.data;
 
-      console.log('Checking if already applied...');
-      const checkResponse = await axios.get(`http://localhost:3000/jobs/check-application`, {
-        params: { 
-          userId: userId,
-          jobId: job._id 
+      // Get suggested jobs based on user profile
+      const response = await axios.get('http://localhost:3000/jobs/suggestions', {
+        params: {
+          userId,
+          skills: userProfile.skills,
+          jobPreferences: userProfile.jobPreferences
         }
       });
 
-      if (checkResponse.data.hasApplied) {
-        console.log('User has already applied for this job');
-        toast.dismiss(loadingToastId);
-        
-        toast.error(
-          <div style={{ padding: '8px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Already Applied</div>
-            <div>You have already submitted an application for {job.jobTitle}</div>
-            <button 
-              onClick={() => navigate('/jobApplications')}
-              style={{
-                marginTop: '8px',
-                background: 'none',
-                border: 'none',
-                color: '#d32f2f',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                textDecoration: 'underline'
-              }}
-            >
-              View Application
-            </button>
-          </div>,
-          { duration: 5000 }
-        );
-        return;
-      }
+      setJobSuggestions(response.data);
+    } catch (error) {
+      console.error('Error refreshing jobs:', error);
+    }
+  };
 
-      // Update loading message
-      toast.loading('Submitting your application...', {
-        id: loadingToastId,
-      });
+  useEffect(() => {
+    refreshJobs();
+  }, []);
 
-      console.log('Submitting application...');
+  const handleApply = async (job) => {
+    try {
+      const userId = sessionStorage.getItem('userId');
+      
+      // Show loading toast
+      toast.loading('Submitting application...');
+
+      // Fetch user profile data
+      const profileResponse = await axios.get(`http://localhost:3000/Employeeprofile/profile/${userId}`);
+      
+      // Extract profile data
+      const {
+        name,
+        email,
+        experienceYears = 0,
+        experienceMonths = 0,
+        degree = [],
+        resume = '',
+        address = '',
+        skills = [],
+        jobPreferences = [],
+        photo = '',
+        dob,
+        phone = '',
+        atsScore = 0
+      } = profileResponse.data;
+
+      // Calculate total experience
+      const experience = (experienceYears || 0) + ((experienceMonths || 0) / 12);
+
+      // Prepare application data
       const applicationData = {
-        userId: userId,
+        userId,
         jobId: job._id,
+        employerId: job.userId,
+        name,
+        email,
+        experience,
+        degree: Array.isArray(degree) ? degree : [degree].filter(Boolean),
         jobTitle: job.jobTitle,
-        companyName: job.companyName
+        resume,
+        address,
+        skills: Array.isArray(skills) ? skills : skills?.split(',').filter(Boolean) || [],
+        jobPreferences: Array.isArray(jobPreferences) ? jobPreferences : jobPreferences?.split(',').filter(Boolean) || [],
+        photo,
+        dob,
+        phone,
+        companyName: job.companyName,
+        atsScore
       };
 
-      console.log('Application data:', applicationData);
+      // Send application
+      const response = await axios.post('http://localhost:3000/jobs/apply', applicationData);
 
-      const response = await axios.post(
-        `http://localhost:3000/jobs/apply-suggestion`, 
-        applicationData
-      );
+      // Clear all toasts
+      toast.dismiss();
 
-      console.log('Application response:', response.data);
-      toast.dismiss(loadingToastId);
+      // Show success message
+      toast.success('Successfully applied for the job!');
 
-      if (response.data.message) {
-        console.log('Application submitted successfully');
-        toast.success(
-          <div style={{ padding: '8px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Application Submitted!</div>
-            <div>Successfully applied for {job.jobTitle}</div>
-            <button 
-              onClick={() => navigate('/jobApplications')}
-              style={{
-                marginTop: '8px',
-                background: 'none',
-                border: 'none',
-                color: '#2e7d32',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                textDecoration: 'underline'
-              }}
-            >
-              View Applications
-            </button>
-          </div>,
-          { duration: 5000 }
-        );
-      }
+      // Refresh the job suggestions
+      refreshJobs();
+
     } catch (error) {
-      console.error('Error applying for job:', error);
-      toast.error(
-        <div style={{ padding: '8px' }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Application Failed</div>
-          <div>{error.response?.data?.message || 'Failed to submit application. Please try again.'}</div>
-        </div>,
-        { duration: 4000 }
-      );
+      // Clear all toasts
+      toast.dismiss();
+      
+      // Handle ATS score error specifically
+      if (error.response?.data?.atsScoreTooLow) {
+        toast.error(
+          `Your ATS score (${error.response.data.userScore}%) does not meet the requirement (${error.response.data.requiredScore}%). Please improve your resume.`
+        );
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to apply for the job');
+      }
     }
   };
 
@@ -534,140 +517,406 @@ const EmployeePage = () => {
     setOpenAtsDialog(false);
   };
 
-  const JobSuggestionCard = ({ job, onApply }) => {
-    // Add a click handler function
-    const handleApplyClick = () => {
-      console.log('Apply button clicked for job:', job.jobTitle);
-      onApply(job); // Call the parent's onApply function
+  // Add handlers for the match details dialog
+  const handleOpenMatchDetails = (job) => {
+    if (job) {
+      setSelectedJob(job);
+      setOpenMatchDetails(true);
+    }
+  };
+
+  const handleCloseMatchDetails = () => {
+    setOpenMatchDetails(false);
+    setSelectedJob(null);
+  };
+
+  // Move getMatchReasons outside of JobSuggestionCard
+  const getMatchReasons = (job, profileData) => {
+    // Early return if job or profileData is null/undefined
+    if (!job || !profileData) {
+      return [];
+    }
+
+    console.log('Job Matching Details:', {
+      job: {
+        id: job?._id || job?.id,
+        title: job?.title || job?.jobTitle,
+        rawSkillScore: job?.skillScore,
+        rawExperienceScore: job?.experienceScore,
+        rawPreferenceScore: job?.preferenceScore,
+        rawQualificationScore: job?.qualificationScore,
+        rawResumeRelevance: job?.resumeRelevance,
+        matchedSkills: job?.matchedSkills,
+        requiredSkills: job?.requiredSkills
+      },
+      profile: {
+        atsScore: profileData?.atsScore,
+        atsDetails: profileData?.atsDetails
+      }
+    });
+
+    const normalizeScore = (score) => {
+      if (!score) return 0;
+      const normalized = Math.round(score * 100);
+      return Math.min(Math.max(normalized, 0), 100);
+    };
+
+    const getScoreColor = (score) => {
+      if (score >= 80) return '#4caf50';
+      if (score >= 50) return '#ff9800';
+      return '#f44336';
+    };
+
+    const formatReason = (text, score, icon) => {
+      return {
+        text,
+        score: Math.round(score),
+        icon,
+        color: getScoreColor(score)
+      };
+    };
+
+    const reasons = [];
+    const skillScore = normalizeScore(job.skillScore);
+    const experienceScore = normalizeScore(job.experienceScore);
+    const preferenceScore = normalizeScore(job.preferenceScore);
+    const qualificationScore = normalizeScore(job.qualificationScore);
+
+    // Log normalized scores
+    console.log('Normalized Scores:', {
+      skillScore,
+      experienceScore,
+      preferenceScore,
+      qualificationScore
+    });
+
+    // Skills match
+    if (skillScore > 0) {
+      reasons.push(formatReason(
+        `${skillScore >= 80 ? 'Strong' : 'Partial'} skill match (${job.matchedSkills?.length || 0}/${job.requiredSkills?.length || 0} skills)`,
+        skillScore,
+        <CodeIcon />
+      ));
+    }
+
+    // Experience match
+    if (experienceScore > 0) {
+      reasons.push(formatReason(
+        `${experienceScore >= 80 ? 'Experience level is an excellent match' : 'Experience level is suitable'}`,
+        experienceScore,
+        <WorkIcon />
+      ));
+    }
+
+    // Preference match
+    if (preferenceScore > 0) {
+      reasons.push(formatReason(
+        `${preferenceScore >= 80 ? 'Job type matches your preferences' : 'Job type partially matches your preferences'}`,
+        preferenceScore,
+        <StarIcon />
+      ));
+    }
+
+    // Qualification match
+    if (qualificationScore > 0) {
+      reasons.push(formatReason(
+        `${qualificationScore >= 80 ? 'All qualifications match' : 'Some qualifications match'}`,
+        qualificationScore,
+        <SchoolIcon />
+      ));
+    }
+
+    // ATS Score
+    const actualAtsScore = profileData?.atsScore || 0;
+    reasons.push(formatReason(
+      `${actualAtsScore >= 80 ? 'Strong ATS Score' :
+         actualAtsScore >= 50 ? 'Moderate ATS Score' :
+         'Low ATS Score'}`,
+      actualAtsScore,
+      <AssessmentIcon />
+    ));
+
+    // Resume Relevance
+    const baseResumeScore = job.resumeRelevance ? normalizeScore(job.resumeRelevance) : 0;
+    const atsWeight = 0.7;
+    const matchWeight = 0.3;
+    const finalResumeScore = Math.round(
+      (actualAtsScore * atsWeight) + (baseResumeScore * matchWeight)
+    );
+
+    reasons.push(formatReason(
+      `${finalResumeScore >= 80 ? 'High resume relevance' :
+         finalResumeScore >= 50 ? 'Moderate resume relevance' :
+         'Low resume relevance'}`,
+      finalResumeScore,
+      <DescriptionIcon />
+    ));
+
+    return reasons;
+  };
+
+  const JobSuggestionCard = ({ job, onApply, profileData }) => {
+    // Add debugging logs
+    console.log('Job Data:', {
+      id: job.id,
+      title: job.title,
+      experience: job.experience,
+      requiredExperience: job.requiredExperience,
+      rawExperience: job.experience
+    });
+
+    if (!job) return null;
+
+    // Fix score calculations - ensure they're between 0-100
+    const normalizeScore = (score) => {
+      if (!score) return 0;
+      // Convert decimal to percentage and ensure it's between 0-100
+      const normalized = Math.round(score * 100);
+      return Math.min(Math.max(normalized, 0), 100);
+    };
+
+    // Add proper score normalization
+    const atsMatchScore = profileData?.atsScore || 0;
+    const resumeRelevance = Math.min(
+      ((profileData?.atsDetails?.keywords || 0) * 0.4 +
+       (profileData?.atsDetails?.sections || 0) * 0.3 +
+       (profileData?.atsDetails?.format || 0) * 0.3) * 100,
+      100
+    );
+    const matchPercentage = normalizeScore(job.score);
+    const skillScore = normalizeScore(job.skillScore);
+    const experienceScore = normalizeScore(job.experienceScore);
+    const preferenceScore = normalizeScore(job.preferenceScore);
+    const qualificationScore = normalizeScore(job.qualificationScore);
+
+    // Helper function to get color based on normalized score
+    const getScoreColor = (score) => {
+      if (score >= 80) return '#4caf50'; // success green
+      if (score >= 50) return '#ff9800'; // warning orange
+      return '#f44336'; // error red
+    };
+
+    // Helper function to format reason
+    const formatReason = (text, score, icon) => {
+      return {
+        text,
+        score: Math.round(score), // Round to nearest integer
+        icon,
+        color: getScoreColor(score)
+      };
+    };
+
+    // Format match reasons with ATS and Resume relevance
+    const matchReasons = getMatchReasons(job, profileData);
+
+    const handleApplyClick = async () => {
+      try {
+        const checkResponse = await axios.get('http://localhost:3000/jobs/check-application', {
+          params: {
+            userId: sessionStorage.getItem('userId'),
+            jobId: job._id || job.id
+          }
+        });
+
+        if (checkResponse.data.hasApplied) {
+          toast.error('You have already applied for this job');
+          return;
+        }
+
+        const response = await axios.post('http://localhost:3000/jobs/apply-suggestion', {
+          userId: sessionStorage.getItem('userId'),
+          jobId: job._id || job.id,
+          jobTitle: job.title || job.jobTitle,
+          companyName: job.companyName,
+          employerId: job.userId
+        });
+
+        toast.success('Application submitted successfully!');
+        if (onApply) onApply(job);
+      } catch (error) {
+        console.error('Error applying for job:', error);
+        if (error.response?.status === 404) {
+          toast.error('This job is no longer available');
+        } else if (error.response?.data?.message) {
+          toast.error(error.response.data.message);
+        } else {
+          toast.error('Error submitting application. Please try again.');
+        }
+      }
+    };
+
+    const formatSalary = (salary) => {
+      if (!salary) return 'Salary N/A';
+      return `₹${salary}`;
+    };
+
+    // Update the experience formatting
+    const formatExperience = (exp) => {
+      // Add console log to debug the experience data
+      console.log('Experience data:', exp);
+      
+      // Check for both experience and requiredExperience
+      const experienceData = exp || job.experience || job.requiredExperience;
+      
+      if (!experienceData) {
+        return "Experience not specified";
+      }
+
+      const years = experienceData.years || 0;
+      const months = experienceData.months || 0;
+
+      if (years === 0 && months === 0) {
+        return "No experience required";
+      }
+
+      let expText = '';
+      if (years > 0) {
+        expText += `${years} Year${years > 1 ? 's' : ''}`;
+      }
+      if (months > 0) {
+        expText += `${years > 0 ? ' ' : ''}${months} Month${months > 1 ? 's' : ''}`;
+      }
+      return expText;
     };
 
     return (
-      <Card sx={{ 
-        mb: 3, 
-        borderRadius: 2,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        transition: 'transform 0.2s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-5px)',
-          boxShadow: '0 6px 16px rgba(0,0,0,0.15)'
-        }
-      }}>
+      <Card sx={{ mb: 2, position: 'relative' }}>
         <CardContent>
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
+            {/* Left Section - Job Details */}
             <Grid item xs={12} md={8}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                {job.logoUrl ? (
-                  <Avatar 
-                    src={`http://localhost:3000/${job.logoUrl}`}
-                    alt={job.companyName}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                mb: 3 
+              }}>
+                <Avatar 
+                  src={job.logoUrl ? `http://localhost:3000/${job.logoUrl}` : null}
+                  alt={job.companyName}
+                  sx={{ 
+                    width: 70, 
+                    height: 70,
+                    mr: 2.5,
+                    border: '1px solid #eee',
+                    bgcolor: 'grey.100'
+                  }}
+                  imgProps={{
+                    onError: (e) => {
+                      console.error('Logo load error:', e);
+                      e.target.src = null;
+                    }
+                  }}
+                >
+                  {!job.logoUrl && <BusinessIcon sx={{ fontSize: 40, color: 'grey.500' }} />}
+                </Avatar>
+                <Box>
+                  <Typography 
+                    variant="h5" 
                     sx={{ 
-                      width: 80, 
-                      height: 80, 
-                      mr: 2,
-                      border: '2px solid #eee'
-                    }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/company-default.png";
-                    }}
-                  />
-                ) : (
-                  <Avatar 
-                    sx={{ 
-                      width: 80, 
-                      height: 80, 
-                      mr: 2,
-                      bgcolor: 'primary.light'
+                      fontWeight: 'bold', 
+                      color: '#360275',
+                      mb: 0.5 
                     }}
                   >
-                    <BusinessIcon sx={{ fontSize: 40 }} />
-                  </Avatar>
-                )}
-                <Box>
-                  <Typography variant="h5" gutterBottom color="primary" sx={{ fontWeight: 'bold' }}>
-                    {job.jobTitle}
+                    {job.title || job.jobTitle}
                   </Typography>
-                  <Typography variant="h6" color="text.secondary">
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      color: 'text.secondary',
+                      fontWeight: 500 
+                    }}
+                  >
                     {job.companyName}
                   </Typography>
                 </Box>
               </Box>
 
               <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocationOnIcon color="action" />
-                    <Typography variant="body1">{job.location}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WorkIcon color="action" />
-                    <Typography variant="body1">
-                      {`${job.experience.years}y ${job.experience.months}m`}
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    bgcolor: '#f5f5f5',
+                    p: 1.5,
+                    borderRadius: 1
+                  }}>
+                    <WorkIcon color="primary" />
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {formatExperience(job.experience || job.requiredExperience)}
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CurrencyRupeeIcon color="action" />
-                    <Typography variant="body1">
-                      {job.salary}
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    bgcolor: '#f5f5f5',
+                    p: 1.5,
+                    borderRadius: 1
+                  }}>
+                    <LocationOnIcon color="primary" />
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {job.location || 'Location N/A'}
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarTodayIcon color="action" />
-                    <Typography variant="body1">
-                      Apply by: {formatDate(job.lastDate)}
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    bgcolor: '#f5f5f5',
+                    p: 1.5,
+                    borderRadius: 1
+                  }}>
+                    <MonetizationOnIcon color="primary" />
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {formatSalary(job.salary)}
                     </Typography>
                   </Box>
                 </Grid>
               </Grid>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="subtitle1" 
-                  gutterBottom 
-                  color="primary" 
-                  sx={{ 
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <WorkIcon fontSize="small" />
-                  Required Skills
+              {/* Skills Section */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Required Skills:
                 </Typography>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap', 
-                  gap: 1,
-                  mt: 1 
-                }}>
-                  {Array.isArray(job.skills) && job.skills.length > 0 ? (
-                    job.skills.map((skill, index) => (
-      <Chip
-        key={index}
-        label={skill}
-                        color={job.matchedSkills?.includes(skill.toLowerCase()) ? "success" : "default"}
-                        variant={job.matchedSkills?.includes(skill.toLowerCase()) ? "filled" : "outlined"}
-        size="small"
-                        icon={job.matchedSkills?.includes(skill.toLowerCase()) ? <CheckCircleIcon /> : undefined}
-                        sx={{
-                          '& .MuiChip-label': {
-                            fontWeight: 500
-                          },
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: 1
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {job.requiredSkills && job.requiredSkills.length > 0 ? (
+                    job.requiredSkills.map((skill, index) => {
+                      const isMatched = job.matchedSkills && job.matchedSkills.includes(skill.toLowerCase());
+                      return (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          sx={{ 
+                            borderRadius: '4px',
+                            backgroundColor: isMatched ? '#360275' : '#f5f5f5',
+                            color: isMatched ? 'white' : '#666',
+                            fontWeight: 500,
+                            fontSize: '0.9rem',
+                            '&:hover': {
+                              backgroundColor: isMatched ? '#4a0b99' : '#e0e0e0',
+                              transform: 'translateY(-2px)',
+                              transition: 'all 0.2s'
+                            },
+                            transition: 'all 0.2s',
+                            px: 1,
+                            height: '32px'
+                          }}
+                          icon={isMatched ? 
+                            <CheckCircleIcon sx={{ 
+                              color: 'white !important',
+                              fontSize: '18px'
+                            }} /> : null
                           }
-                        }}
-                      />
-                    ))
+                        />
+                      );
+                    })
                   ) : (
                     <Typography variant="body2" color="text.secondary">
                       No specific skills listed
@@ -677,94 +926,239 @@ const EmployeePage = () => {
               </Box>
             </Grid>
 
+            {/* Right Section - Only Overall Match Score */}
             <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                <Typography variant="subtitle1" gutterBottom color="primary" sx={{ fontWeight: 'bold' }}>
-                  Why this matches you:
-                </Typography>
-                <List dense>
-                  {job.matchReasons.map((reason, index) => (
-                    <ListItem key={index}>
-                      <ListItemIcon>
-                        <CheckCircleIcon color="success" fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={reason}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          color: 'text.secondary'
-                        }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2
+              }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <CircularProgress
+                    variant="determinate"
+                    value={Math.min(matchPercentage, 100)}
+                    size={60}
+                    thickness={4}
+                    sx={{
+                      color: matchPercentage >= 80 ? 'success.main' :
+                             matchPercentage >= 60 ? 'warning.main' :
+                             'error.main'
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>
+                    {Math.min(matchPercentage, 100)}% Overall Match
+                  </Typography>
+                </Box>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handleOpenMatchDetails(job)}
+                  startIcon={<InfoIcon />}
+                  sx={{
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'primary.main',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  Why this matches?
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </CardContent>
-
-        <CardActions sx={{ p: 2, justifyContent: 'flex-end', borderTop: '1px solid #eee' }}>
-          <Button
-            variant="contained"
-            onClick={handleApplyClick}
-            sx={{
-              backgroundColor: '#360275',
-              color: 'white',
-              padding: '10px 30px',
-              '&:hover': {
-                backgroundColor: '#4a0b99',
-                transform: 'scale(1.02)',
-              },
-              '&:active': {
-                transform: 'scale(0.98)',
-              },
-              transition: 'all 0.2s ease',
-              fontWeight: 'bold',
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontSize: '1rem',
-              boxShadow: '0 4px 6px rgba(54, 2, 117, 0.2)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SendIcon />
-              Apply Now
-            </Box>
-          </Button>
-        </CardActions>
       </Card>
     );
   };
 
   const fetchProfileAndSuggest = async () => {
     try {
-      if (!userId) return;
+      if (!userId) {
+        console.log('No userId found');
+        return;
+      }
 
+      console.log('Fetching profile for userId:', userId);
       const profileResponse = await axios.get(`http://localhost:3000/Employeeprofile/profile/${userId}`);
       const profile = profileResponse.data;
+      console.log('Fetched profile:', profile);
       setProfileData(profile);
 
-      // Make sure skills are properly formatted
-      const jobSuggestionData = {
-        resumeText: profile.resume || '',
-        skills: profile.skills || [], // Ensure skills is an array
-        experience: profile.experience || '',
-        jobPreferences: profile.jobPreferences || []
-      };
+      // Ensure profile has required data
+      if (!profile || !profile.skills || profile.skills.length === 0) {
+        console.log('Profile missing required data:', {
+          hasProfile: !!profile,
+          hasSkills: !!profile?.skills,
+          skillsLength: profile?.skills?.length
+        });
+        setSuggestedJobs([]);
+        return;
+      }
 
+      console.log('Fetching job descriptions...');
+      const jobDescriptions = await axios.get('http://localhost:3000/jobs/viewjob');
+      console.log('Fetched jobs:', jobDescriptions.data);
+
+      // Send job matching request
       setLoadingSuggestions(true);
-      const suggestionsResponse = await axios.post(
+      const matchingResponse = await axios.post(
         'http://localhost:3000/jobs/suggest-jobs',
-        jobSuggestionData
+        {
+          userId,
+          skills: profile.skills,
+        experience: {
+            years: profile.experienceYears || 0,
+            months: profile.experienceMonths || 0
+          },
+          jobPreferences: profile.jobPreferences || [],
+          qualifications: profile.degree || [],
+          resume: profile.resume,
+          atsScore: profile.atsScore
+        }
       );
 
-      setSuggestedJobs(suggestionsResponse.data);
+      console.log('Job matching response:', matchingResponse.data);
+
+      // Process and filter jobs with sorting
+      const processedJobs = (matchingResponse.data || [])
+        .filter(job => job && job.score > 0.5)
+        .map(job => ({
+          ...job,
+          id: job.id || job._id,
+          title: job.title || job.jobTitle,
+          logoUrl: job.logoUrl,
+          matchScore: Math.round(job.score * 100),
+          atsMatchScore: Math.round(job.atsMatchScore * 100),
+          resumeRelevance: Math.round(job.resumeRelevance * 100),
+          matchedSkills: job.matchedSkills || [],
+          unmatchedSkills: job.unmatchedSkills || [],
+          requiredSkills: job.requiredSkills || []
+        }))
+        .sort((a, b) => b.score - a.score); // Sort by score in descending order
+
+      console.log('Processed and sorted jobs:', processedJobs);
+      setSuggestedJobs(processedJobs);
+
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error('Error loading profile data');
+      console.error('Error in fetchProfileAndSuggest:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      // More specific error message
+      if (error.response?.status === 404) {
+        toast.error('Profile not found. Please complete your profile first.');
+      } else {
+        toast.error('Error loading job suggestions: ' + (error.response?.data?.message || error.message));
+      }
     } finally {
       setLoadingSuggestions(false);
     }
+  };
+
+  // Add the Match Details Dialog component
+  const MatchDetailsDialog = ({ open, onClose, job, profileData }) => {
+    // Only calculate matchReasons if both job and profileData exist
+    const matchReasons = (job && profileData) ? getMatchReasons(job, profileData) : [];
+
+    return (
+      <Dialog 
+        open={open} 
+        onClose={onClose}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          bgcolor: 'primary.main', 
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          {job ? `Match Details for ${job.jobTitle || job.title}` : 'Match Details'}
+          <IconButton onClick={onClose} sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2, p: 3 }}>
+          {job && profileData ? (
+            <Grid container spacing={2}>
+              {matchReasons.map((reason, index) => (
+                <Grid item xs={12} sm={6} key={index}>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      backgroundColor: alpha(reason.color, 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderLeft: `4px solid ${reason.color}`,
+                      transition: 'transform 0.2s ease-in-out',
+                      '&:hover': {
+                        backgroundColor: alpha(reason.color, 0.15),
+                        transform: 'translateY(-2px)',
+                        boxShadow: 1
+                      }
+                    }}
+                  >
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      maxWidth: '70%' 
+                    }}>
+                      {React.cloneElement(reason.icon, { 
+                        sx: { 
+                          color: reason.color, 
+                          mr: 1.5, 
+                          fontSize: '1.2rem' 
+                        } 
+                      })}
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.3
+                        }}
+                      >
+                        {reason.text}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: reason.color,
+                        fontWeight: 'bold',
+                        backgroundColor: alpha(reason.color, 0.15),
+                        padding: '3px 8px',
+                        borderRadius: '10px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {reason.score}%
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body1" color="text.secondary">
+                No match details available
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   return (
@@ -843,7 +1237,6 @@ const EmployeePage = () => {
         </Grid>
       </Container>
 
-
       <Container style={{ marginTop: '30px', marginBottom: '30px', borderRadius: '50px', maxWidth: '84.5%' }}>
         {showAtsAlert && (
           <Card 
@@ -851,7 +1244,7 @@ const EmployeePage = () => {
             sx={{ 
               mb: 3,
               background: atsScore < 50 ? '#FDE8E8' : 
-                         atsScore < 60 ? '#FFF4E5' : 
+                         atsScore < 60 ? '#FFF4E5' :
                          '#E8F5E9',
               position: 'relative',
               overflow: 'visible'
@@ -1118,33 +1511,36 @@ const EmployeePage = () => {
           </style>
 
           {loadingSuggestions ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
               <CircularProgress />
             </Box>
           ) : suggestedJobs.length > 0 ? (
             <Grid container spacing={3}>
-              {suggestedJobs.map((job) => (
-                <Grid item xs={12} key={job._id}>
+              {suggestedJobs.map((job, index) => (
+                <Grid item xs={12} key={index}>
                   <JobSuggestionCard 
                     job={job} 
-                    onApply={(job) => {
-                      console.log('Parent onApply called with job:', job.jobTitle);
-                      handleApply(job);
-                    }}
+                    onApply={handleApply} 
+                    profileData={profileData}
                   />
                 </Grid>
               ))}
             </Grid>
           ) : (
-            <Typography variant="body1" color="text.secondary" align="center">
-              {!profileData ? (
-                "Loading profile data..."
-              ) : !profileData.resume ? (
-                "Please upload your resume in the profile section to get job suggestions"
-              ) : (
-                "No matching jobs found at the moment. Please check back later."
-              )}
-            </Typography>
+            <Box sx={{ 
+              textAlign: 'center', 
+              py: 4,
+              backgroundColor: '#f5f5f5',
+              borderRadius: 2,
+              mt: 2
+            }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No matching jobs found at the moment
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Try updating your profile with more skills and experience to improve job matches
+              </Typography>
+            </Box>
           )}
         </Container>
       </Container>
@@ -1172,7 +1568,7 @@ const EmployeePage = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
+        <DialogContent sx={{ mt: 3 }}>
           {tests.length > 0 ? (
             <TableContainer component={Paper}>
               <Table>
@@ -1183,6 +1579,8 @@ const EmployeePage = () => {
                     <TableCell sx={{ fontWeight: 'bold' }}>Company</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Duration</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Total Marks</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Last Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1198,17 +1596,37 @@ const EmployeePage = () => {
                       <TableCell>{test.duration} mins</TableCell>
                       <TableCell>{test.totalMarks} marks</TableCell>
                       <TableCell>
+                        {moment(test.lastDate).format('DD MMM YYYY')}
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={test.status}
+                          color={test.status === 'Active' ? 'success' : 'error'}
+                          size="small"
+                          sx={{ 
+                            minWidth: '80px',
+                            '& .MuiChip-label': {
+                              fontWeight: 500
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
                         <Button
                           variant="contained"
                           color="primary"
                           onClick={() => handleTakeTest(test._id)}
                           startIcon={<AssessmentIcon />}
+                          disabled={test.status === 'Expired'}
                           sx={{
                             bgcolor: '#360275',
-                            '&:hover': { bgcolor: '#4a0ba8' }
+                            '&:hover': { bgcolor: '#4a0ba8' },
+                            '&.Mui-disabled': {
+                              bgcolor: 'rgba(0, 0, 0, 0.12)'
+                            }
                           }}
                         >
-                          Take Test
+                          {test.status === 'Expired' ? 'Expired' : 'Take Test'}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -1413,7 +1831,7 @@ const EmployeePage = () => {
                           • Resume Structure: {Math.round(atsScore * 0.25)}%
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          • Achievement Descriptions: {Math.round(atsScore * 0.25)}%
+                          • Experience Description: {Math.round(atsScore * 0.25)}%
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           • Information Format: {Math.round(atsScore * 0.15)}%
@@ -1452,6 +1870,14 @@ const EmployeePage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Match Details Dialog */}
+      <MatchDetailsDialog 
+        open={openMatchDetails}
+        onClose={handleCloseMatchDetails}
+        job={selectedJob}
+        profileData={profileData}
+      />
 
       <Footer />
     </div>

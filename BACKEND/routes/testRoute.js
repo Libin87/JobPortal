@@ -5,52 +5,34 @@ const { TestResult } = require('../model/testResultModel');
 const Job = require('../model/job'); // Add this import
 const { Test } = require('../model/testModel');
 const Application = require('../model/applicationModel'); // Add this import
+const EmployeeProfile = require('../model/EmployeeProfile'); // Fix: correct path to EmployeeProfile model
 
-// Route to create a test
-// router.post('/createTest', async (req, res) => {
-//   try {
-//     const { testName, employerId, jobId, duration, passingMarks, totalMarks, questions } = req.body;
 
-//     // Validate input
-//     if (!testName || !duration || !passingMarks || !totalMarks || !questions || !Array.isArray(questions)) {
-//       return res.status(400).json({ message: 'Missing or invalid fields' });
-//     }
-
-//     // Validate questions
-//     for (const question of questions) {
-//       if (!question.question || !Array.isArray(question.options) || question.options.length === 0 || !question.correctAnswer || !question.marks) {
-//         return res.status(400).json({ message: 'Invalid question format' });
-//       }
-//     }
-
-//     const newTest = new Test({
-//       testName,
-//       employerId,
-//       jobId,
-//       duration,
-//       passingMarks,
-//       totalMarks,
-//       questions,
-//       testStatus:'Pending'
-//     });
-
-//     await newTest.save();
-//     res.status(201).json({ message: 'Test created successfully', test: newTest });
-//   } catch (error) {
-//     console.error('Error creating test:', error);
-//     res.status(500).json({ message: 'Error creating test', error: error.message });
-//   }
-// });
-
-// ... existing code ...
 
 router.post('/createTest', async (req, res) => {
   try {
-    const { testName, employerId, jobId, duration, passingMarks, totalMarks, questions } = req.body;
+    const { 
+      testName, 
+      employerId, 
+      jobId, 
+      duration, 
+      passingMarks, 
+      totalMarks, 
+      questions, 
+      lastDate,
+      difficultyLevel
+    } = req.body;
 
     // Validate input
-    if (!testName || !duration || !passingMarks || !totalMarks || !questions || !Array.isArray(questions)) {
+    if (!testName || !duration || !passingMarks || !totalMarks || !questions || !Array.isArray(questions) || !lastDate || !difficultyLevel) {
       return res.status(400).json({ message: 'Missing or invalid fields' });
+    }
+
+    // Validate last date
+    const testLastDate = new Date(lastDate);
+    const today = new Date();
+    if (testLastDate < today) {
+      return res.status(400).json({ message: 'Last date cannot be in the past' });
     }
 
     // If jobId is provided, check if a test already exists for this job
@@ -78,7 +60,9 @@ router.post('/createTest', async (req, res) => {
       passingMarks,
       totalMarks,
       questions,
-      testStatus: 'Pending'
+      lastDate: testLastDate,
+      difficultyLevel,
+      testStatus: 'Active'
     });
 
     await newTest.save();
@@ -88,6 +72,7 @@ router.post('/createTest', async (req, res) => {
     res.status(500).json({ message: 'Error creating test', error: error.message });
   }
 });
+
 // Route to submit a test result
 router.post('/submitTest', async (req, res) => {
   try {
@@ -118,99 +103,85 @@ router.post('/submitTest', async (req, res) => {
 router.get('/employee-tests/:employeeId', async (req, res) => {
   try {
     const { employeeId } = req.params;
+    console.log('\n=== Starting Test Access Check ===');
+    console.log('Employee ID:', employeeId);
 
-    // Step 1: Find all pending job applications for the employee
-    const pendingApplications = await Application.find({
+    // 1. Get user's ATS score first
+    const userProfile = await EmployeeProfile.findOne({ userId: employeeId });
+    if (!userProfile) {
+      console.log('❌ User profile not found');
+      return res.json([]);
+    }
+
+    const userAtsScore = parseFloat(userProfile.atsScore) || 0;
+    console.log('👤 User Profile Found:');
+    console.log('- ATS Score:', userAtsScore, '%');
+
+    // 2. Get all pending applications
+    const applications = await Application.find({
       userId: employeeId,
-      approvalStatus: 'Pending',
-    }).select('jobId');
-
-    if (pendingApplications.length === 0) {
-      return res.json({
-        hasTests: false,
-        message: "No tests available. You haven't applied for any jobs or all tests have been completed.",
-      });
-    }
-
-    // Extract job IDs from the applications
-    const jobIds = pendingApplications.map((app) => app.jobId);
-
-    // Step 2: Fetch tests associated with these jobs and ensure they haven't been taken
-    const tests = await Test.aggregate([
-      {
-        $match: {
-          jobId: { $in: jobIds },
-        },
-      },
-      // Join with jobs collection to get job details
-      {
-        $lookup: {
-          from: 'jobs',
-          localField: 'jobId',
-          foreignField: '_id',
-          as: 'jobDetails',
-        },
-      },
-      {
-        $unwind: '$jobDetails',
-      },
-      // Check if the test hasn't been taken by this employee
-      {
-        $lookup: {
-          from: 'testresults',
-          let: { testId: '$_id', employeeId: new mongoose.Types.ObjectId(employeeId) },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ['$testId', '$$testId'] },
-                    { $eq: ['$employeeId', '$$employeeId'] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: 'testResults',
-        },
-      },
-      // Filter tests that have not been taken yet
-      {
-        $match: {
-          testResults: { $size: 0 },
-        },
-      },
-      // Select only the required fields for the response
-      {
-        $project: {
-          _id: 1,
-          testName: 1,
-          duration: 1,
-          totalMarks: 1,
-          passingMarks: 1,
-          jobTitle: '$jobDetails.jobTitle',
-          companyName: '$jobDetails.companyName',
-          createdAt: 1,
-        },
-      },
-    ]);
-
-    // Step 3: Return the response based on the test data
-    if (tests.length === 0) {
-      return res.json({
-        hasTests: false,
-        message: 'No tests available. Either you have completed all tests or no tests are assigned to your applications.',
-      });
-    }
-
-    res.json({
-      hasTests: true,
-      tests,
+      testStatus: 'Pending'
     });
+
+    if (!applications.length) {
+      console.log('No pending applications found');
+      return res.json([]);
+    }
+
+    // 3. Get jobs for these applications
+    const jobIds = applications.map(app => app.jobId);
+    const Job = mongoose.model('jobs'); // Get the model this way
+    const jobs = await Job.find({ _id: { $in: jobIds } });
+
+    // 4. Filter eligible jobs
+    const eligibleJobIds = jobs
+      .filter(job => {
+        const isEligible = userAtsScore >= (job.atsScoreRequirement || 0);
+        console.log(`\nJob ${job.jobTitle}:`);
+        console.log(`Required ATS: ${job.atsScoreRequirement}%`);
+        console.log(`User ATS: ${userAtsScore}%`);
+        console.log(`Eligible: ${isEligible ? '✅ Yes' : '❌ No'}`);
+        return isEligible;
+      })
+      .map(job => job._id);
+
+    console.log('\n✨ Eligible Jobs:', eligibleJobIds.length);
+
+    // 5. Get tests for eligible jobs
+    const tests = await Test.find({
+      jobId: { $in: eligibleJobIds },
+      testStatus: 'Active'
+    });
+
+    // 6. Format response with job details
+    const formattedTests = await Promise.all(tests.map(async test => {
+      const job = jobs.find(j => j._id.toString() === test.jobId.toString());
+      return {
+        _id: test._id,
+        testName: test.testName,
+        jobTitle: job?.jobTitle,
+        companyName: job?.companyName,
+        duration: test.duration,
+        totalMarks: test.totalMarks,
+        lastDate: test.lastDate,
+        jobId: test.jobId,
+        atsRequired: job?.atsScoreRequirement,
+        userAtsScore: userAtsScore
+      };
+    }));
+
+    console.log('\n=== Test Access Check Complete ===');
+    console.log(`Returning ${formattedTests.length} eligible tests\n`);
+
+    return res.json(formattedTests);
+
   } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred while fetching tests.',
+    console.error('\n❌ Error in employee-tests route:', error);
+    console.error('Stack:', error.stack);
+    return res.status(500).json({
+      message: 'Error fetching tests',
       error: error.message,
+      stack: error.stack
     });
   }
 });
@@ -298,6 +269,13 @@ router.get('/get-test/:testId', async (req, res) => {
       return res.status(404).json({ message: 'Test not found' });
     }
 
+    // Add console log to debug
+    console.log('Test from database:', {
+      testName: test.testName,
+      difficultyLevel: test.difficultyLevel,
+      // ... other relevant fields
+    });
+
     // Format the test data for the frontend
     const formattedTest = {
       _id: test._id,
@@ -308,6 +286,7 @@ router.get('/get-test/:testId', async (req, res) => {
       jobId: test.jobId,
       numberOfQuestions: test.questions.length,
       difficultyLevel: test.difficultyLevel,
+      lastDate: test.lastDate,
       questions: test.questions.map(q => ({
         _id: q._id,
         question: q.question,
@@ -325,6 +304,9 @@ router.get('/get-test/:testId', async (req, res) => {
         formattedTest.companyName = job.companyName;
       }
     }
+
+    // Add console log before sending response
+    console.log('Sending formatted test:', formattedTest);
 
     res.json(formattedTest);
   } catch (error) {
@@ -386,8 +368,9 @@ router.get('/employer-tests/:employerId', async (req, res) => {
           passingMarks: 1,
           createdAt: 1,
           testStatus: 1,
+          lastDate: 1,
           jobTitle: '$jobDetails.jobTitle',
-          numberOfQuestions: { $size: '$questions' },  // Count of questions
+          numberOfQuestions: { $size: '$questions' },
           difficultyLevel: 1
         }
       }
@@ -433,23 +416,20 @@ router.put('/update-test/:testId', async (req, res) => {
       numberOfQuestions, 
       difficultyLevel,
       questions,
-      jobId 
+      jobId,
+      lastDate
     } = req.body;
 
     // Validate input
-    if (!testName || !duration || !passingMarks || !totalMarks || !numberOfQuestions || !difficultyLevel) {
+    if (!testName || !duration || !passingMarks || !totalMarks || !numberOfQuestions || !difficultyLevel || !lastDate) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Validate questions
-    if (questions && Array.isArray(questions)) {
-      for (const question of questions) {
-        if (!question.question || !Array.isArray(question.options) || 
-            question.options.length === 0 || !question.correctAnswer || 
-            !question.marks) {
-          return res.status(400).json({ message: 'Invalid question format' });
-        }
-      }
+    // Validate last date
+    const testLastDate = new Date(lastDate);
+    const today = new Date();
+    if (testLastDate < today) {
+      return res.status(400).json({ message: 'Last date cannot be in the past' });
     }
 
     // Find and update the test
@@ -464,6 +444,7 @@ router.put('/update-test/:testId', async (req, res) => {
         difficultyLevel,
         questions: questions || [],
         jobId,
+        lastDate: testLastDate,
         updatedAt: new Date()
       },
       { 
@@ -633,6 +614,7 @@ router.get('/pending-tests/:employeeId', async (req, res) => {
         companyName: application?.jobId.companyName,
         duration: test.duration,
         totalMarks: test.totalMarks,
+        lastDate: test.lastDate,
         jobId: test.jobId
       };
     });
@@ -642,6 +624,48 @@ router.get('/pending-tests/:employeeId', async (req, res) => {
     console.error('Error fetching pending tests:', error);
     res.status(500).json({ 
       message: 'Error fetching pending tests',
+      error: error.message 
+    });
+  }
+});
+
+// Update the check-expired-tests route
+router.put('/check-expired-tests', async (req, res) => {
+  try {
+    const currentDate = new Date();
+    
+    // Update test status to expired
+    const result = await Test.updateMany(
+      { 
+        lastDate: { $lt: currentDate },
+        testStatus: { $ne: 'Expired' }
+      },
+      { 
+        $set: { testStatus: 'Expired' }
+      }
+    );
+
+    // Also update related applications
+    if (result.modifiedCount > 0) {
+      await Application.updateMany(
+        {
+          testStatus: 'Pending',
+          'test.lastDate': { $lt: currentDate }
+        },
+        {
+          $set: { testStatus: 'Expired' }
+        }
+      );
+    }
+
+    res.json({
+      message: 'Tests updated successfully',
+      updatedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Error updating expired tests:', error);
+    res.status(500).json({ 
+      message: 'Error updating expired tests', 
       error: error.message 
     });
   }

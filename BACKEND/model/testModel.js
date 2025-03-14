@@ -18,12 +18,17 @@ const testSchema = new mongoose.Schema({
   totalMarks: { type: Number, required: true },
   questions: [questionSchema],
   createdAt: { type: Date, default: Date.now },
+  lastDate: { type: Date, required: true },
   testStatus: {
     type: String,
-    enum: ['Pending', 'Completed'], // Specify possible values
-    default: 'Pending' // Default value
+    enum: ['Active', 'Completed', 'Expired'],
+    default: 'Active'
+  },
+  difficultyLevel: { 
+    type: String,
+    required: true,
+    enum: ['Easy', 'Intermediate', 'Advanced', 'Expert']
   }
-
 });
 
 const Test = mongoose.model('Test', testSchema);

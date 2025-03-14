@@ -157,14 +157,8 @@ const AdminJobApproval = () => {
       });
 
       if (response.data) {
-        const updatedJobs = jobs.map(job => 
-          job._id === jobId 
-            ? { ...job, approvalStatus: 'approved', approvalDate }
-            : job
-        );
-        
-        setJobs(updatedJobs);
-      toast.success('Job approved successfully!');
+        setJobs(prevJobs => prevJobs.filter(job => job._id !== jobId));
+        toast.success('Job approved successfully!');
       }
     } catch (err) {
       console.error('Error approving job:', err);
@@ -294,7 +288,7 @@ const AdminJobApproval = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-                {jobs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((job, index) => (
+                {jobs.filter(job => job.approvalStatus !== 'approved').map((job, index) => (
                 <StyledTableRow key={job._id}>
                     <StyledTableCell>{page * rowsPerPage + index + 1}</StyledTableCell>
                     
@@ -486,25 +480,20 @@ const AdminJobApproval = () => {
                           <>
                             <Button
                               variant="contained"
-                              color="success"
+                              color="primary"
                               size="small"
                               onClick={() => handleApprove(job._id)}
-                              sx={{ mr: 1 }}
                             >
                               Approve
                             </Button>
-                            {job.approvalStatus !== 'Rejected' && (
-                              <Button
-                                variant="contained"
-                                color="error"
-                                onClick={() => {
-                                  setSelectedJobForReject(job);
-                                  setOpenJobRejectDialog(true);
-                                }}
-                              >
-                                Reject
-                              </Button>
-                            )}
+                            <Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              onClick={() => handleReject(job._id)}
+                            >
+                              Reject
+                            </Button>
                           </>
                         )}
                       </Box>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Grid, Button, Paper, Card, CardContent, Box, Typography } from '@mui/material';
+import { Container, Grid, Button, Paper, Card, CardContent, Box, Typography, IconButton } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import NavbarAdmin from './NavbarAdmin'; 
 import Footer from '../../components/Footer';
@@ -29,6 +29,7 @@ const AdminPage = () => {
   });
   const [pendingJobs, setPendingJobs] = useState(0);
   const [pendingProfiles, setPendingProfiles] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const COLORS = ['#360275', '#0D6EFD', '#FF8042', '#00C49F', '#8884d8', '#82ca9d'];
   const USER_COLORS = ['#360275', '#FF8042'];
@@ -89,6 +90,21 @@ const AdminPage = () => {
     };
 
     fetchPendingCounts();
+  }, []);
+
+  useEffect(() => {
+    const fetchPendingVerifications = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/profile/pending-verifications');
+        setPendingCount(response.data.total);
+      } catch (error) {
+        console.error('Error fetching pending verifications:', error);
+      }
+    };
+
+    fetchPendingVerifications();
+    const interval = setInterval(fetchPendingVerifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const paymentManagementButton = (
@@ -160,12 +176,14 @@ const AdminPage = () => {
                 style={{ backgroundColor: '#00CCCD' }}
                 startIcon={
                   <Badge 
-                    badgeContent={pendingJobs + pendingProfiles} 
+                    badgeContent={pendingCount} 
                     color="error"
                     sx={{
                       '& .MuiBadge-badge': {
+                        backgroundColor: '#ff1744',
+                        color: 'white',
                         right: -3,
-                        top: 3,
+                        top: 3
                       }
                     }}
                   >

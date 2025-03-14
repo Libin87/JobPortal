@@ -16,11 +16,12 @@ import {
   Menu,
   MenuItem as MuiMenuItem,
   Divider,
+  InputAdornment,
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import NavbarEmployer from './NavbarEmployer';
 import Footer from '../../components/Footer';
-import { toast, ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ProfileWarning from '../../components/ProfileWarning';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -41,6 +42,7 @@ const EmployerPage = () => {
     contactDetails: '',
     lastDate: '',
     vaccancy: '',
+    atsScoreRequirement: '',
   });
 
   const [error, setError] = useState({});
@@ -57,6 +59,9 @@ const EmployerPage = () => {
   const [contactMessage, setContactMessage] = useState('');
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [jobTypeOptions] = useState([
+   'frontend-developer', 'ui-designer', 'backend-developer', 'fullstack-developer', 'project-manager', 'data-scientist', 'product-designer', 'devops-engineer', 'qa-engineer', 'marketing-specialist', 'hr-manager', 'content-writer'
+  ]);
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -120,13 +125,24 @@ const EmployerPage = () => {
 
     switch (name) {
       case 'salary': {
-        const salaryValue = parseFloat(value);
-        if (isNaN(salaryValue) || salaryValue < 1000 || salaryValue > 5000000) {
-          errors[name] = 'Enter a valid salary (between 1,000 and 5,000,000)';
+        if (!value) {
+          errors[name] = 'Salary is required';
+          break;
+        }
+        
+        // Remove any commas and spaces from the input
+        const cleanValue = value.toString().replace(/[₹,\s]/g, '');
+        const salaryValue = parseFloat(cleanValue);
+
+        if (isNaN(salaryValue)) {
+          errors[name] = 'Please enter a valid number';
+        } else if (salaryValue < 1000) {
+          errors[name] = 'Salary must be at least ₹1,000';
+        } else if (salaryValue > 5000000) {
+          errors[name] = 'Salary cannot exceed ₹50,00,000';
         }
         break;
       }
-
       case 'experience': {
         const { years, months } = value;
         if (years === '' && months === '') {
@@ -145,64 +161,92 @@ const EmployerPage = () => {
       }
 
       case 'jobTitle': {
-        const titleLocationRegex1 = /^(?!.*([a-zA-Z])\1\1\1)[A-Za-z\s]+(?:\d{0,2})?$/;
-        if (!titleLocationRegex1.test(value)) {
-          errors[name] = 'Enter a valid job title';
+        if (!value.trim()) {
+          errors[name] = 'Job title is required';
+        } else if (value.trim().length < 4) {
+          errors[name] = 'Job title must be at least 4 characters long';
+        } else {
+          const spaceCount = (value.match(/ /g) || []).length;
+          if (spaceCount > 2) {
+            errors[name] = 'Maximum 2 spaces allowed';
+          } else {
+            // Allow letters and spaces, less strict validation
+            const words = value.trim().split(/\s+/);
+            const isValidFormat = words.every(word => 
+              !word || (/^[A-Za-z]+$/.test(word) && word.length >= 2)
+            );
+            if (!isValidFormat) {
+              errors[name] = 'Only letters are allowed and each word must be at least 2 characters';
+            }
+          }
         }
         break;
       }
 
       case 'location': {
-        const titleLocationRegex = /^(?!.*([a-zA-Z])\1\1\1)[A-Za-z\s]+(?:\d{0,2})?$/;
-        if (!titleLocationRegex.test(value)) {
-          errors[name] = 'Enter a valid location';
+        if (!value.trim()) {
+          errors[name] = 'Location is required';
+        } else if (value.trim().length < 4) {
+          errors[name] = 'Location must be at least 4 characters long';
+        } else {
+          const spaceCount = (value.match(/ /g) || []).length;
+          if (spaceCount > 2) {
+            errors[name] = 'Maximum 2 spaces allowed';
+          } else {
+            // Allow letters and spaces, less strict validation
+            const words = value.trim().split(/\s+/);
+            const isValidFormat = words.every(word => 
+              !word || (/^[A-Za-z]+$/.test(word) && word.length >= 2)
+            );
+            if (!isValidFormat) {
+              errors[name] = 'Only letters are allowed and each word must be at least 2 characters';
+            }
+          }
         }
         break;
       }
 
-     case 'vaccancy': {
+      case 'vaccancy': {
         const vacancyRegex = /^(?:[1-9][0-9]?|100)$/;
-        if (!vacancyRegex.test(String(value).trim())) {
+        if (!String(value).trim()) {
+          errors[name] = 'Vacancy is required';
+        } else if (!vacancyRegex.test(String(value).trim())) {
           errors[name] = 'Vacancy must be a number between 1 and 100';
         }
         break;
       }
 
-
-      case 'contactDetails': {
-        const phoneRegex = /^\d{10}$/;
-        const repeatedDigitsRegex = /(\d)\1{4,}/;
-        const emailRegex = /^[A-Za-z][A-Za-z0-9._%+-]{2,}@[A-Za-z0-9.-]{3,}\.(com|in|org|net|edu|gov|mil|co|info|biz|me)$/;
-
-        if (!phoneRegex.test(value) && !emailRegex.test(value)) {
-          errors[name] = 'Enter a valid phone number (10 digits) or email address';
-        } else if (phoneRegex.test(value) && repeatedDigitsRegex.test(value)) {
-          errors[name] = 'Enter a valid phone number';
+      case 'atsScoreRequirement': {
+        const score = parseInt(value);
+        if (!value) {
+          errors[name] = 'ATS score is required';
+        } else if (isNaN(score) || score < 10 || score > 100) {
+          errors[name] = 'ATS score must be between 10 and 100';
+        } else if (value.includes('.')) {
+          errors[name] = 'Decimal values are not allowed';
         }
         break;
       }
 
-      case 'skills':
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          errors[name] = 'Please select at least one skill';
+      case 'jobDescription': {
+        if (!value.trim()) {
+          errors[name] = 'Job description is required';
+        } else if (value.trim().length < 10) {
+          errors[name] = 'Job description must be at least 10 characters long';
+        } else {
+          // Check each line for maximum 2 consecutive spaces
+          const lines = value.split('\n');
+          for (const line of lines) {
+            if (line.trim()) { // Only check non-empty lines
+              if (/\s{3,}/.test(line)) {
+                errors[name] = 'Maximum 2 consecutive spaces allowed per line';
+                break;
+              }
+            }
+          }
         }
         break;
-
-      case 'qualifications':
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          errors[name] = 'Please select at least one qualification';
-        }
-        break;
-
-      case 'jobDescription':
-        if (value && value.trim().length < 10) {
-          errors.jobDescription = 'Job description must be at least 10 characters long.';
-        } else if (/([a-zA-Z])\1\1/.test(value)) {
-          errors.jobDescription = 'No letter should be repeated more than three times consecutively.';
-        } else if (/\d/.test(value)) {
-          errors.jobDescription = 'Job description should not contain digits.';
-        }
-        break;
+      }
 
       case 'lastDate': {
         const selectedDate = new Date(value);
@@ -232,6 +276,62 @@ const EmployerPage = () => {
         break;
       }
 
+      case 'contactDetails': {
+        const phoneRegex = /^\d{10}$/;
+        const repeatedDigitsRegex = /(\d)\1{4,}/;
+        const emailRegex = /^[A-Za-z][A-Za-z0-9._%+-]{2,}@[A-Za-z0-9.-]{3,}\.(com|in|org|net|edu|gov|mil|co|info|biz|me)$/;
+
+        if (!phoneRegex.test(value) && !emailRegex.test(value)) {
+          errors[name] = 'Enter a valid phone number (10 digits) or email address';
+        } else if (phoneRegex.test(value) && repeatedDigitsRegex.test(value)) {
+          errors[name] = 'Enter a valid phone number';
+        }
+        break;
+      }
+
+      case 'skills':
+        if (!value || (Array.isArray(value) && value.length === 0)) {
+          errors[name] = 'Please select at least one skill';
+        }
+        break;
+
+      case 'qualifications':
+        if (!value || (Array.isArray(value) && value.length === 0)) {
+          errors[name] = 'Please select at least one qualification';
+        }
+        break;
+
+      case 'jobType': {
+        if (!value.trim()) {
+          errors[name] = 'Job type is required';
+        } else {
+          // Split by comma and validate each job type
+          const jobTypes = value.split(',').map(type => type.trim());
+          
+          // Check if there are more than 2 job types
+          if (jobTypes.length > 2) {
+            errors[name] = 'Maximum 2 job types allowed';
+          }
+          
+          // Check each job type
+          for (const type of jobTypes) {
+            if (!type) {
+              errors[name] = 'Empty job types are not allowed';
+              break;
+            }
+            if (!/^[A-Za-z\s-]+$/.test(type)) {
+              errors[name] = 'Job types can only contain letters, spaces, and hyphens';
+              break;
+            }
+            if (type.length < 3) {
+              errors[name] = 'Each job type must be at least 3 characters long';
+              break;
+            }
+          }
+        }
+        break;
+      }
+
       default:
         break;
     }
@@ -249,51 +349,83 @@ const EmployerPage = () => {
         ...prev,
         [name || 'skills']: newValue
       }));
-
-      // Validate arrays
-      const fieldError = validateField(name || 'skills', newValue);
-      setError(prev => ({
-        ...prev,
-        [name || 'skills']: fieldError[name || 'skills'] || ''
-      }));
       return;
     }
 
     // Handle regular inputs
     if (name) {
-      const trimmedValue = value ? value.trim() : '';
+      let processedValue = value;
+
+      // Special handling for salary
+      if (name === 'salary') {
+        const numericValue = value.replace(/[^0-9]/g, '');
+        processedValue = numericValue ? parseInt(numericValue).toLocaleString('en-IN') : '';
+        
+        // Validate immediately for salary
+        const fieldError = validateField(name, processedValue);
+        setError(prev => ({
+          ...prev,
+          [name]: fieldError[name] || null // Clear error if validation passes
+        }));
+      }
+
+      // Special handling for jobTitle and location
+      if (name === 'jobTitle' || name === 'location') {
+        processedValue = value
+          .replace(/\s+/g, ' ')
+          .split(' ')
+          .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
+          .join(' ');
+          
+        // Validate immediately
+        const fieldError = validateField(name, processedValue);
+        setError(prev => ({
+          ...prev,
+          [name]: fieldError[name] || null
+        }));
+      }
+
+      // Special handling for numeric fields
+      if (name === 'vaccancy' || name === 'atsScoreRequirement') {
+        const numValue = parseInt(value);
+        if (!isNaN(numValue)) {
+          const fieldError = validateField(name, value);
+          setError(prev => ({
+            ...prev,
+            [name]: fieldError[name] || null
+          }));
+        }
+      }
+
+      // Special handling for jobDescription
+      if (name === 'jobDescription') {
+        processedValue = value
+          .split('\n')
+          .map(line => line.replace(/\s{3,}/g, '  '))
+          .join('\n');
+          
+        // Validate immediately
+        const fieldError = validateField(name, processedValue);
+        setError(prev => ({
+          ...prev,
+          [name]: fieldError[name] || null
+        }));
+      }
+
+      // Update form data
       setFormData(prev => ({
         ...prev,
-        [name]: trimmedValue
-      }));
-
-      // Validate the field
-      const fieldError = validateField(name, trimmedValue);
-      setError(prev => ({
-        ...prev,
-        [name]: fieldError[name] || ''
+        [name]: processedValue
       }));
     }
   };
 
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    
-    // Special handling for experience fields
-    if (name.startsWith('experience.')) {
-      const errorMessage = validateField('experience', formData.experience);
-      setError(prev => ({
-        ...prev,
-        experience: errorMessage
-      }));
-      return;
-    }
-
-    // For other fields
+  const handleBlur = (event) => {
+    const { name, value } = event.target;
     const fieldError = validateField(name, value);
     setError(prev => ({
       ...prev,
-      ...fieldError
+      [name]: fieldError[name] || null // Clear error if validation passes
     }));
   };
 
@@ -311,80 +443,86 @@ const EmployerPage = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Check verification status before allowing job posting
-    if (verificationStatus !== 'Verified') {
-      toast.error(
-        verificationStatus === 'Pending' 
-          ? 'Your company profile is pending verification. Please wait for admin approval.'
-          : 'Your company profile has not been verified. You cannot post jobs at this time.'
-      );
-      return;
-    }
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     // Validate all fields
     let hasErrors = false;
     const newErrors = {};
-
-    // Validate all fields including skills and qualifications
     Object.keys(formData).forEach(key => {
       const fieldError = validateField(key, formData[key]);
-      if (fieldError[key]) {
-        newErrors[key] = fieldError[key];
+      if (Object.keys(fieldError).length > 0) {
         hasErrors = true;
+        newErrors[key] = fieldError[key];
       }
     });
 
-    // If there are errors, show them and stop submission
     if (hasErrors) {
       setError(newErrors);
+      toast.error('Please fix the errors before submitting');
       return;
     }
 
-    const userId = sessionStorage.getItem('userId');
-    const companyName = sessionStorage.getItem('cname');
-    const logoUrl = sessionStorage.getItem('logo');
-
-    // Format the data before sending
-    const jobData = {
-      ...formData,
-      userId,
-      companyName,
-      logoUrl,
-      skills: Array.isArray(formData.skills) ? formData.skills : [],
-      qualifications: Array.isArray(formData.qualifications) ? formData.qualifications : []
-    };
-
     try {
-      const response = await axios.post('http://localhost:3000/jobs/create', jobData);
-      console.log(response.data);
-      setOpenPopup(true);
-      // Reset form
-      setFormData({
-        jobTitle: '',
-        location: '',
-        salary: '',
-        jobType: '',
-        qualifications: [],
-        skills: [],
-        jobDescription: '',
-        experience: {
-          years: '',
-          months: ''
-        },
-        contactDetails: '',
-        lastDate: '',
-        vaccancy: ''
+      const userId = sessionStorage.getItem('userId');
+      const companyName = sessionStorage.getItem('cname');
+      const logoUrl = sessionStorage.getItem('logo');
+
+      const response = await axios.post('http://localhost:3000/jobs/create', {
+        ...formData,
+        userId,
+        companyName,
+        logoUrl
       });
-      setError({}); // Clear all errors
-    } catch (err) {
-      console.error('Error posting job:', err);
-      setError(prev => ({
-        ...prev,
-        general: 'There was an issue posting the job. Please try again.'
-      }));
+
+      if (response.status === 201) {
+        // Show success toast
+        toast.success('Job posted successfully! 🎉', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+
+        // Reset form
+        setFormData({
+          jobTitle: '',
+          location: '',
+          salary: '',
+          jobType: '',
+          qualifications: [],
+          skills: [],
+          jobDescription: '',
+          experience: {
+            years: '',
+            months: ''
+          },
+          contactDetails: '',
+          lastDate: '',
+          vaccancy: '',
+          atsScoreRequirement: '',
+        });
+
+        // Clear any errors
+        setError({});
+      }
+    } catch (error) {
+      console.error('Error posting job:', error);
+      
+      // Show error toast with specific message from backend
+      const errorMessage = error.response?.data?.message || 'Failed to post job';
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     }
   };
 
@@ -408,6 +546,7 @@ const EmployerPage = () => {
       contactDetails: '',
       lastDate: '',
       vaccancy: '',
+      atsScoreRequirement: '',
     });
   };
 
@@ -666,51 +805,116 @@ const EmployerPage = () => {
                         label="Salary in rupees"
                         name="salary"
                         value={formData.salary}
-                        onChange={handleInputChange}
+                        onChange={(e) => {
+                          // Format the salary input with commas
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          const formattedValue = value ? parseInt(value).toLocaleString('en-IN') : '';
+                          setFormData(prev => ({
+                            ...prev,
+                            salary: formattedValue
+                          }));
+                        }}
                         onBlur={handleBlur}
                         fullWidth
                         required
                         error={!!error.salary}
                         helperText={error.salary}
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                        }}
                       />
                     </Grid>
 
                     <Grid item xs={12} md={6}>
-                      <TextField
-                        select
-                        label="Job Type"
-                        name="jobType"
+                      <Autocomplete
+                        freeSolo
+                        options={jobTypeOptions}
                         value={formData.jobType}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        MenuProps={{
-                          PaperProps: {
-                            style: {
-                              textAlign: 'left',
+                        onChange={(event, newValue) => {
+                          if (newValue) {
+                            // If there's already a job type with a comma
+                            if (formData.jobType.includes(',')) {
+                              // Don't add another one
+                              return;
+                            }
+                            // If the current value already has a job type
+                            const currentTypes = formData.jobType.split(',').map(t => t.trim()).filter(Boolean);
+                            if (currentTypes.length > 0) {
+                              // Add the new value with a comma
+                              const updatedValue = `${currentTypes[0]},${newValue}`;
+                              setFormData(prev => ({
+                                ...prev,
+                                jobType: updatedValue
+                              }));
+                            } else {
+                              // Set as first value
+                              setFormData(prev => ({
+                                ...prev,
+                                jobType: newValue
+                              }));
+                            }
+                          } else {
+                            setFormData(prev => ({
+                              ...prev,
+                              jobType: ''
+                            }));
+                          }
+                        }}
+                        onInputChange={(event, newInputValue) => {
+                          // Handle comma input
+                          const lastChar = newInputValue.slice(-1);
+                          const previousValue = formData.jobType;
+
+                          // If user types a comma
+                          if (lastChar === ',' && !previousValue.includes(',')) {
+                            // Clean up the value before the comma
+                            const cleanedValue = newInputValue.slice(0, -1).trim();
+                            if (cleanedValue) {
+                              setFormData(prev => ({
+                                ...prev,
+                                jobType: cleanedValue + ','
+                              }));
+                            }
+                            return;
+                          }
+
+                          // If there's already a comma, only allow input after it
+                          if (previousValue.includes(',')) {
+                            const [firstPart, secondPart] = previousValue.split(',');
+                            if (newInputValue.startsWith(firstPart + ',')) {
+                              setFormData(prev => ({
+                                ...prev,
+                                jobType: newInputValue
+                              }));
+                            }
+                            return;
+                          }
+
+                          // Normal input handling
+                          setFormData(prev => ({
+                            ...prev,
+                            jobType: newInputValue
+                          }));
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Job Type"
+                            name="jobType"
+                            required
+                            error={!!error.jobType}
+                            helperText={error.jobType || 'Select or type job type. Use comma to add second job type'}
+                            onBlur={handleBlur}
+                          />
+                        )}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: error.jobType ? 'error.main' : 'inherit',
                             },
                           },
                         }}
-                        sx={{ textAlign: 'left' }}
-                        fullWidth
-                        required
-                        error={!!error.jobType}
-                        helperText={error.jobType}
-                      >
-                        <MenuItem value="frontend-developer">Frontend Developer</MenuItem>
-                        <MenuItem value="ui-designer">UI Designer</MenuItem>
-                        <MenuItem value="backend-developer">Backend Developer</MenuItem>
-                        <MenuItem value="fullstack-developer">Fullstack Developer</MenuItem>
-                        <MenuItem value="project-manager">Project Manager</MenuItem>
-                        <MenuItem value="data-scientist">Data Scientist</MenuItem>
-                        <MenuItem value="product-designer">Product Designer</MenuItem>
-                        <MenuItem value="devops-engineer">DevOps Engineer</MenuItem>
-                        <MenuItem value="qa-engineer">QA Engineer</MenuItem>
-                        <MenuItem value="marketing-specialist">Marketing Specialist</MenuItem>
-                        <MenuItem value="hr-manager">HR Manager</MenuItem>
-                        <MenuItem value="content-writer">Content Writer</MenuItem>
-                        <MenuItem value="content-writer">Other</MenuItem>
-
-                      </TextField>
+                      />
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <Autocomplete
@@ -883,19 +1087,69 @@ const EmployerPage = () => {
                           max: new Date(new Date().setDate(new Date().getDate() + 60)).toISOString().split('T')[0]
                         }}
                       />
-                    </Grid><Grid item xs={12} md={6}>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <TextField
-                        label="No.Of.Vaccancies"
-                        name="vaccancy"
-                        value={formData.vaccancy}
-                        onChange={handleInputChange}
+                            label="No. of Vacancy"
+                            name="vaccancy"
+                        type="number"
+                            value={formData.vaccancy}
+                            onChange={handleInputChange}
                         onBlur={handleBlur}
                         fullWidth
                         required
-                        error={!!error.vaccancy}
-                        helperText={error.vaccancy}
+                            inputProps={{ 
+                              min: 1, 
+                              max: 100,
+                              style: { width: '100%' }
+                            }}
+                            error={!!error.vaccancy}
+                            helperText={error.vaccancy}
+                            sx={{
+                              '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+                                '-webkit-appearance': 'none',
+                                margin: 0,
+                              },
+                              '& input[type=number]': {
+                                '-moz-appearance': 'textfield',
+                              },
+                            }}
                       />
                     </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                            label="ATS Score Required"
+                            name="atsScoreRequirement"
+                        type="number"
+                            value={formData.atsScoreRequirement}
+                            onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        fullWidth
+                        required
+                            inputProps={{ 
+                              min: 10, 
+                              max: 100,
+                              step: 1,
+                              style: { width: '100%' }
+                            }}
+                        error={!!error.atsScoreRequirement}
+                            helperText={error.atsScoreRequirement}
+                            sx={{
+                              '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+                                '-webkit-appearance': 'none',
+                                margin: 0,
+                              },
+                              '& input[type=number]': {
+                                '-moz-appearance': 'textfield',
+                              },
+                            }}
+                      />
+                    </Grid>
+                      </Grid>
+                    </Grid>
+
                     <Grid item xs={12}>
                       <TextField
                         label="Job Description"
@@ -912,6 +1166,7 @@ const EmployerPage = () => {
                       />
                     </Grid>
 
+                    
 
                     <Grid item xs={12}>
                       <Button
@@ -1092,7 +1347,7 @@ const EmployerPage = () => {
 
           <ToastContainer
             position="top-right"
-            autoClose={5000}
+            autoClose={3000}
             hideProgressBar={false}
             newestOnTop={false}
             closeOnClick
@@ -1100,6 +1355,7 @@ const EmployerPage = () => {
             pauseOnFocusLoss
             draggable
             pauseOnHover
+            theme="light"
           />
         </>
       )}

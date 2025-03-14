@@ -58,8 +58,14 @@ const ApplicantList = () => {
         });
 
         console.log('Applications response:', response.data); // Debug log
-        setApplicants(response.data);
-        setError('');
+        
+        if (response.data && Array.isArray(response.data)) {
+          setApplicants(response.data);
+          setError('');
+        } else {
+          setError('Invalid data received from server');
+          toast.error('Error loading applications');
+        }
       } catch (error) {
         console.error('Error fetching applicants:', error);
         setError('Failed to fetch applicants. Please try again.');
@@ -237,7 +243,7 @@ const ApplicantList = () => {
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             display: 'flex',
             flexDirection: 'row',
-            alignItems: 'center',
+            alignItems: 'flex-start',
           }}>
             {selectedApplicant ? (
               <>
@@ -249,8 +255,8 @@ const ApplicantList = () => {
                   borderRight: '1px solid #e0e0e0',
                 }}>
                   <Avatar
-                    src={`http://localhost:3000/${selectedApplicant.photo}`}
-                    alt="Applicant Photo"
+                    src={selectedApplicant.photo ? `http://localhost:3000/${selectedApplicant.photo}` : '/default-avatar.png'}
+                    alt={selectedApplicant.name || 'Applicant'}
                     style={{
                       width: '100px',
                       height: '100px',
@@ -258,29 +264,54 @@ const ApplicantList = () => {
                       borderRadius: '50%',
                       boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
                     }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "path/to/default-image.png";
-                    }}
                   />
-                  <Typography variant="h6" style={{ color: '#360275', fontWeight: 'bold', textAlign: "left", marginLeft: "10px" }}>{selectedApplicant.name}</Typography>
+                  <Typography variant="h6" style={{ 
+                    color: '#360275', 
+                    fontWeight: 'bold', 
+                    marginTop: '10px' 
+                  }}>
+                    {selectedApplicant.name || 'N/A'}
+                  </Typography>
+                  
+                  {selectedApplicant.resume && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      href={`http://localhost:3000/${selectedApplicant.resume}`}
+                      target="_blank"
+                      style={{ marginTop: '10px' }}
+                    >
+                      View Resume
+                    </Button>
+                  )}
                 </Box>
 
                 <Box style={{ flex: 2, paddingLeft: '20px' }}>
-                  <Typography variant="body2" gutterBottom><strong>Email:</strong> {selectedApplicant.email}</Typography>
-                  <Typography variant="body2" gutterBottom><strong>Experience:</strong> {selectedApplicant.experience}</Typography>
-                  <Typography variant="body2" gutterBottom><strong>Degree:</strong> {selectedApplicant.degree}</Typography>
-                  <Typography variant="body2" gutterBottom><strong>Job Title:</strong> {selectedApplicant.jobTitle}</Typography>
-                  <Typography variant="body2" gutterBottom><strong>Address:</strong> {selectedApplicant.address}</Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>Skills:</strong> {selectedApplicant.skills.join(', ')}
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Email:</strong> {selectedApplicant.email || 'N/A'}
                   </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>Job Preferences:</strong> {selectedApplicant.jobPreferences.join(', ')}
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Experience:</strong> {selectedApplicant.experience ? `${selectedApplicant.experience} years` : 'N/A'}
                   </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>Cover Letter:</strong> {selectedApplicant.coverLetter}
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Degree:</strong> {selectedApplicant.degree || 'N/A'}
                   </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Job Title:</strong> {selectedApplicant.jobTitle || 'N/A'}
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Address:</strong> {selectedApplicant.address || 'N/A'}
+                  </Typography>
+                  {selectedApplicant.skills && selectedApplicant.skills.length > 0 && (
+                    <Typography variant="body1" gutterBottom>
+                      <strong>Skills:</strong> {selectedApplicant.skills.join(', ')}
+                    </Typography>
+                  )}
+                  {selectedApplicant.jobPreferences && selectedApplicant.jobPreferences.length > 0 && (
+                    <Typography variant="body1" gutterBottom>
+                      <strong>Job Preferences:</strong> {selectedApplicant.jobPreferences.join(', ')}
+                    </Typography>
+                  )}
                 </Box>
               </>
             ) : (
