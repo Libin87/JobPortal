@@ -1,12 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { NavLink, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+// Using Bootstrap icons, no import needed
 
-const NavbarEmployee = () => {
+const NavbarEmployee = ({ unreadMessageCount: propUnreadCount }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
+  const [localUnreadCount, setLocalUnreadCount] = useState(0);
+  
+  // Use either the prop value or the local state
+  const displayUnreadCount = propUnreadCount !== undefined ? propUnreadCount : localUnreadCount;
 
   useEffect(() => {
     // Retrieve user details from sessionStorage
@@ -24,6 +29,29 @@ const NavbarEmployee = () => {
       return () => clearTimeout(logoutTimer);
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    const fetchUnreadMessageCount = async () => {
+      if (!isLoggedIn) return;
+      
+      try {
+        const userId = sessionStorage.getItem('userId');
+        const response = await axios.get(`http://localhost:3000/api/chat/unread-count/${userId}`);
+        setLocalUnreadCount(response.data.count);
+      } catch (error) {
+        console.error('Error fetching unread message count:', error);
+      }
+    };
+    
+    // Only fetch if prop is not provided
+    if (propUnreadCount === undefined) {
+      fetchUnreadMessageCount();
+      
+      // Set up interval to periodically fetch unread count
+      const interval = setInterval(fetchUnreadMessageCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn, propUnreadCount]);
 
   const handleLogout = () => {
     sessionStorage.removeItem('role');
@@ -97,6 +125,29 @@ const NavbarEmployee = () => {
                 </NavLink>
               )}
             </li>
+            {isLoggedIn && (
+              <li className="nav-item">
+                <NavLink 
+                  to="/chat"
+                  className="nav-link btn btn-primary ms-2"
+                  style={styles.chatButton}
+                >
+                  <i className="bi bi-chat-dots me-1"></i>
+                  Chat
+                  {displayUnreadCount > 0 && (
+                    <span className="badge rounded-pill bg-danger" 
+                      style={{ 
+                        fontSize: '0.6rem', 
+                        position: 'relative', 
+                        top: '-8px', 
+                        left: '-2px' 
+                      }}>
+                      {displayUnreadCount}
+                    </span>
+                  )}
+                </NavLink>
+              </li>
+            )}
           </ul>
         </div>
       </div>
@@ -134,6 +185,14 @@ const styles = {
   logoutButton: {
     backgroundColor: '#dc3545',
     fontSize: '1rem',
+  },
+  chatButton: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+    fontSize: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    color: 'white',
   },
 };
 

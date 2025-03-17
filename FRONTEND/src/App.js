@@ -38,6 +38,7 @@ import ContactMessages from './pages/admin/ContactMessages';
 import JobSuggestionsPage from './pages/employee/JobSuggestionsPage';
 import PaymentManagement from './pages/admin/PaymentManagement';
 import AdminNotifications from './pages/admin/AdminNotifications';
+import Chat from './pages/chat/Chat';
 // Add this to your routes
 
 
@@ -114,6 +115,10 @@ function App() {
           <Route path="/test-complete" element={<TestComplete />} />
 <Route path="/job-suggestions" element={<JobSuggestionsPage />} />
           // ... in your routes ...
+        </Route>
+
+        <Route element={<ProtectedRoute redirectPath="/login" />}>
+          <Route path="/chat" element={<Chat />} />
         </Route>
       </Routes>
     </div>

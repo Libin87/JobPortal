@@ -510,4 +510,25 @@ router.get('/ats-score/:userId', async (req, res) => {
   }
 });
 
+// Optimize the photo route with caching headers
+router.get('/photo/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const profile = await EmployeeProfile.findOne({ userId });
+    
+    if (!profile || !profile.photo) {
+      return res.status(404).send('No profile photo found');
+    }
+    
+    // Add caching headers
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.setHeader('Expires', new Date(Date.now() + 86400000).toUTCString());
+    
+    // Send the photo file
+    res.sendFile(path.join(__dirname, '..', profile.photo));
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching profile photo' });
+  }
+});
+
 module.exports = router;

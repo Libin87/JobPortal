@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { NavLink, useNavigate } from 'react-router-dom';
 
-const NavbarEmployer = () => {
+const NavbarAdmin = ({ unreadMessageCount }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
@@ -92,6 +91,29 @@ const NavbarEmployer = () => {
                 </NavLink>
               )}
             </li>
+            {isLoggedIn && (
+              <li className="nav-item">
+                <NavLink 
+                  to="/chat"
+                  className="nav-link btn btn-primary ms-2"
+                  style={styles.chatButton}
+                >
+                  <i className="bi bi-chat-dots me-1"></i>
+                  Chat
+                  {unreadMessageCount > 0 && (
+                    <span className="badge rounded-pill bg-danger" 
+                      style={{ 
+                        fontSize: '0.6rem', 
+                        position: 'relative', 
+                        top: '-8px', 
+                        left: '-2px' 
+                      }}>
+                      {unreadMessageCount}
+                    </span>
+                  )}
+                </NavLink>
+              </li>
+            )}
           </ul>
         </div>
       </div>
@@ -130,6 +152,11 @@ const styles = {
     backgroundColor: '#dc3545',
     fontSize: '1rem',
   },
+  chatButton: {
+    backgroundColor: '#360275',
+    borderColor: '#360275',
+    fontSize: '1rem',
+  },
 };
 
-export default NavbarEmployer;
+export default NavbarAdmin;

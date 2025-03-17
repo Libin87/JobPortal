@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const morgan = require('morgan');
 const cors = require('cors');
 require('dotenv').config();
 require('./db/connection'); 
@@ -23,8 +22,26 @@ const app = express();
 const path = require('path');
 const fs = require('fs');
 const jobMatcherRoute = require('./routes/jobMatcherRoute');
+const chatRoutes = require('./routes/chatRoute');
 
-app.use(morgan('dev'));  // Log requests
+// Instead, use a custom logger that completely skips chat routes
+app.use((req, res, next) => {
+  // Skip logging for chat routes completely
+  if (!req.url.includes('/api/chat')) {
+    // Only log non-chat routes
+    console.log(`${req.method} ${req.url}`);
+  }
+  next();
+});
+
+// Disable all Express default error logging for chat routes
+app.use((err, req, res, next) => {
+  if (!req.url.includes('/api/chat')) {
+    console.error(err.stack);
+  }
+  res.status(500).send('Something broke!');
+});
+
 app.use(cors()); 
 app.use(express.json());
 const userRoutes = require('./routes/userRoute');
@@ -42,9 +59,10 @@ app.use('/contact', contactRoute);
 app.use('/employee', employeeRoutes);
 app.use('/notifications', require('./routes/notificationRoutes'));
 app.use('/job-matcher', jobMatcherRoute);
+app.use('/api/chat', chatRoutes);
 
-// Make sure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads', 'documents');
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads', 'chat');
 if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -54,10 +72,16 @@ app.listen(PORT, () => {
     console.log(`Server running on PORT ${PORT}`);
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
+// Completely disable mongoose debugging
+mongoose.set('debug', false);
+
+// Update MongoDB connection handlers to be more concise
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error');
+});
+
+mongoose.connection.once('open', () => {
+  console.log('MongoDB connected');
 });
 
 module.exports = app;

@@ -73,10 +73,15 @@ router.get('/company/:userId', async (req, res) => {
 router.get('/logo/:userId', async (req, res) => {
   try {
     const company = await Profile.findOne({ userId: req.params.userId });
-    if (!company) return res.status(404).json({ error: 'Company not found' });
-    res.json({ logoUrl: company.logoUrl });
+    if (!company || !company.logoUrl) return res.status(404).json({ error: 'Logo not found' });
+    
+    // Add caching headers
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.setHeader('Expires', new Date(Date.now() + 86400000).toUTCString());
+    
+    // Send the logo file
+    res.sendFile(path.join(__dirname, '..', company.logoUrl));
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 });
