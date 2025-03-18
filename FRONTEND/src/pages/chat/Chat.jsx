@@ -289,19 +289,19 @@ const Chat = () => {
     if (message.fileUrl) {
       if (message.fileType && message.fileType.startsWith('image/')) {
         return (
-          <div style={{ display: 'inline-block' }}>
+          <div>
             <img 
               src={`http://localhost:3000${message.fileUrl}`} 
               alt="Shared" 
               style={styles.messageImage}
               onClick={() => window.open(`http://localhost:3000${message.fileUrl}`, '_blank')}
             />
-            {message.content && <p style={styles.messageText}>{message.content}</p>}
+            {message.content && <p style={{...styles.messageText, display: 'block'}}>{message.content}</p>}
           </div>
         );
       } else {
         return (
-          <div style={{ display: 'inline-block' }}>
+          <div>
             <a 
               href={`http://localhost:3000${message.fileUrl}`} 
               target="_blank" 
@@ -311,13 +311,13 @@ const Chat = () => {
               <i className="bi bi-file-earmark"></i>
               Download File
             </a>
-            {message.content && <p style={styles.messageText}>{message.content}</p>}
+            {message.content && <p style={{...styles.messageText, display: 'block'}}>{message.content}</p>}
           </div>
         );
       }
     }
     
-    return <span style={styles.messageText}>{message.content}</span>;
+    return <div style={{...styles.messageText, display: 'block'}}>{message.content}</div>;
   };
 
   // Get file URL helper
@@ -488,47 +488,6 @@ const Chat = () => {
     forcePreloadAllProfilePics();
   }, [users]);
 
-  // Add this CSS fix to your component
-  useEffect(() => {
-    // Add a style tag to fix the message display issue
-    const styleTag = document.createElement('style');
-    styleTag.innerHTML = `
-      .message-text {
-        white-space: pre-wrap !important;
-        word-break: break-word !important;
-        display: inline !important;
-      }
-      
-      .message-bubble {
-        display: inline-block !important;
-        max-width: 85% !important;
-        word-wrap: break-word !important;
-        white-space: normal !important;
-      }
-      
-      .sent-message {
-        background-color: #dcf8c6 !important;
-        padding: 8px 12px !important;
-        border-radius: 8px 0px 8px 8px !important;
-        margin-bottom: 2px !important;
-        box-shadow: 0 1px 1px rgba(0,0,0,0.1) !important;
-      }
-      
-      .received-message {
-        background-color: white !important;
-        padding: 8px 12px !important;
-        border-radius: 0px 8px 8px 8px !important;
-        margin-bottom: 2px !important;
-        box-shadow: 0 1px 1px rgba(0,0,0,0.1) !important;
-      }
-    `;
-    document.head.appendChild(styleTag);
-    
-    return () => {
-      document.head.removeChild(styleTag);
-    };
-  }, []);
-
   const renderNavbar = () => {
     const NavbarComponent = (() => {
     switch (currentUser.role.toLowerCase()) {
@@ -578,18 +537,13 @@ const Chat = () => {
         }}>
           {!isCurrentUser && (
             <div style={{
+              ...styles.userAvatar,
               width: '30px',
               height: '30px',
-              borderRadius: '50%',
-              backgroundColor: '#128C7E',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
               marginRight: '8px',
               marginLeft: '0',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              backgroundColor: '#128C7E' // Use green color
             }}>
               {profilePic ? (
                 <img 
@@ -611,54 +565,15 @@ const Chat = () => {
               )}
             </div>
           )}
-          <div className={`message-bubble ${isCurrentUser ? 'sent-message' : 'received-message'}`}>
-            {message.fileUrl ? (
-              <div>
-                {message.fileType && message.fileType.startsWith('image/') ? (
-                  <img 
-                    src={`http://localhost:3000${message.fileUrl}`} 
-                    alt="Shared" 
-                    style={{
-                      maxWidth: '200px',
-                      maxHeight: '200px',
-                      borderRadius: '5px',
-                      marginBottom: '5px',
-                      objectFit: 'contain',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => window.open(`http://localhost:3000${message.fileUrl}`, '_blank')}
-                  />
-                ) : (
-                  <a 
-                    href={`http://localhost:3000${message.fileUrl}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      color: 'inherit',
-                      textDecoration: 'none',
-                      padding: '5px',
-                      backgroundColor: 'rgba(0,0,0,0.05)',
-                      borderRadius: '5px',
-                      marginBottom: '5px'
-                    }}
-                  >
-                    <i className="bi bi-file-earmark"></i>
-                    Download File
-                  </a>
-                )}
-                {message.content && <span className="message-text">{message.content}</span>}
-              </div>
-            ) : (
-              <span className="message-text">{message.content}</span>
-            )}
+          <div style={{
+            ...isCurrentUser ? styles.sentMessage : styles.receivedMessage
+          }}>
+            <MessageContent message={message} />
           </div>
         </div>
         <span style={{
-          fontSize: '0.7rem',
-          color: '#6c757d',
+          ...styles.messageTime,
+          position: 'static',
           marginTop: '4px',
           textAlign: isCurrentUser ? 'right' : 'left',
           paddingLeft: isCurrentUser ? '0' : '8px',
@@ -1104,7 +1019,8 @@ const styles = {
     boxShadow: '0 1px 1px rgba(0,0,0,0.1)',
     wordBreak: 'break-word',
     display: 'inline-block', // Ensure proper text wrapping
-    width: 'auto' // Let the width be determined by content
+    width: 'auto', // Let the width be determined by content
+    textAlign: 'left' // Ensure text alignment is left
   },
   receivedMessage: {
     backgroundColor: 'white',
@@ -1115,15 +1031,16 @@ const styles = {
     boxShadow: '0 1px 1px rgba(0,0,0,0.1)',
     wordBreak: 'break-word',
     display: 'inline-block', // Ensure proper text wrapping
-    width: 'auto' // Let the width be determined by content
+    width: 'auto', // Let the width be determined by content
+    textAlign: 'left' // Ensure text alignment is left
   },
   messageText: {
     margin: '0',
     wordBreak: 'break-word',
     fontSize: '0.95rem',
     lineHeight: '1.4',
-    whiteSpace: 'pre-wrap', // This ensures proper line breaks
-    display: 'inline' // Display text inline
+    whiteSpace: 'normal', // Changed from pre-wrap to normal
+    display: 'block' // Changed from inline to block
   },
   messageTime: {
     fontSize: '0.6rem',
